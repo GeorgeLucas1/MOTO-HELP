@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moto Help - Oficinas e Mecânicos</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <header class="header">
+        <div class="container">
+            <div class="logo-title">
+                <img src="../assets/logo.png" alt="Moto Help" class="logo-img">
+                <h1 class="title">Bem-vindo ao Moto Help</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-business">GERENCIAR ANUNCIOS </button>
+                <button class="btn-partner" id="btnAbrirModalCadastro">SEJA UM PARCEIRO</button>
+                <a href="#" id="meuPerfil" class="btn-profile" title="Atualizar dados">
+                    <i class="fa-solid fa-user"></i>
+                </a>
+                <button id="logoutButton" class="btn-logout" title="Sair">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <section class="search-section">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Pesquisar por nome, serviço ,oficinas ou mecanicos..." class="search-input">
+                </div>
+                <div class="filters">
+                    <span class="filter-label">FILTRAR POR:</span>
+                    <div class="filter-options">
+                        <label class="filter-option">
+                            <input type="checkbox" name="filter" value="oficina">
+                            <span class="checkmark"></span>
+                            Oficinas
+                        </label>
+                        <label class="filter-option">
+                            <input type="checkbox" name="filter" value="mecanico">
+                            <span class="checkmark"></span>
+                            Mecânicos
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Os anúncios serão inseridos aqui dinamicamente pelo JavaScript -->
+            <section class="listings" id="listingsContainer"></section>
+
+            <section class="pagination" id="paginationContainer">
+                <!-- Paginação será gerada aqui -->
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Moto Help. Trabalho de Conclusão de Curso (TCC ).</p>
+        </div>
+    </footer>
+
+    <!-- Modal Genérico para Detalhes -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Informações</h2>
+                <button class="close-btn" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body" id="detailsModalBody">
+                <!-- Conteúdo do modal será inserido aqui -->
+            </div>
+        </div>
+    </div>
+
+
+<!-- Modal Editar Dados -->
+<div id="modalEditar" class="modalEditar" style="display:none;">
+  <div class="modal-content modal-cadastro">
+    <div class="modal-header">
+      <h2>ATUALIZAR DADOS</h2>
+      <button class="close-btn" data-close-modal data-target="modalEditar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="cadastro-form">
+        <div class="form-header">
+          <h3>MOTO HELP - ATUALIZAR</h3>
+        </div>
+        <form id="formEditar" class="partner-form" novalidate>
+          <div class="form-group empresa-question">
+            <label class="form-label">Você representa uma empresa?</label>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="is_empresa" value="sim" required> <span class="radio-custom"></span> SIM
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="is_empresa" value="nao" required> <span class="radio-custom"></span> NÃO
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group" id="edit_empresaFieldContainer" style="display:none;">
+            <label for="edit_nome_empresa" class="form-label">Nome da Empresa *</label>
+            <input type="text" id="edit_nome_empresa" name="nome_empresa" class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label for="edit_email" class="form-label">Email *</label>
+            <input type="email" id="edit_email" name="email" class="form-input" required>
+          </div>
+
+          <div class="form-group">
+            <label for="edit_telefone" class="form-label">Telefone / WhatsApp *</label>
+            <input type="tel" id="edit_telefone" name="telefone" class="form-input" placeholder="(00) 00000-0000" required>
+          </div>
+
+            <div class="form-group">
+        <label for="cpf_cnpj_editar" class="form-label">CPF ou CNPJ *</label>
+        <input type="text" id="cpf_cnpj_editar" name="cpf_cnpj_editar" class="form-input" placeholder="Apenas números" required>
+    </div>
+
+          <div class="form-group">
+            <label for="edit_endereco" class="form-label">Endereço *</label>
+            <textarea id="edit_endereco" name="endereco" class="form-textarea" rows="3" placeholder="Rua, número, bairro, cidade, estado" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="edit_categoria" class="form-label">Categoria *</label>
+            <select id="edit_categoria" name="categoria" class="form-select" required>
+              <option value="">Selecione</option>
+              <option value="mecanico">Mecânico</option>
+              <option value="oficina">Oficina</option>
+            </select>
+          </div>
+
+          <div class="form-actions edit-actions">
+            <button type="submit" class="btn-cadastrar">Salvar Alterações</button>
+            <a href="#" id="excluirContaLink" class="link-excluir">Excluir Conta</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+    <!-- Modal de Cadastro de Parceiro -->
+    <div id="modalCadastro" class="modal">
+        <div class="modal-content modal-cadastro">
+            <div class="modal-header">
+                <h2>FORMULÁRIO DE CADASTRO</h2>
+                <button class="close-btn" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="cadastro-form">
+                    <div class="form-header">
+                        <h3>MOTO HELP - BUSINESS</h3>
+                    </div>
+                    <form id="formCadastro" class="partner-form" novalidate>
+                        <div class="form-group empresa-question">
+                            <label class="form-label">Você representa uma empresa?</label>
+                            <div class="radio-group">
+                                <label class="radio-option"><input type="radio" name="is_empresa" value="sim" required> <span class="radio-custom"></span> SIM</label>
+                                <label class="radio-option"><input type="radio" name="is_empresa" value="nao" required> <span class="radio-custom"></span> NÃO</label>
+                            </div>
+                        </div>
+                        <div class="form-group" id="empresaFieldContainer" style="display: none;">
+                            <label for="nome_empresa" class="form-label">Nome da Empresa *</label>
+                            <input type="text" id="nome_empresa" name="nome_empresa" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" id="email" name="email" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="telefone" class="form-label">Telefone / WhatsApp *</label>
+                            <input type="tel" id="telefone" name="telefone" class="form-input" placeholder="(00) 00000-0000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cpf_cnpj" class="form-label">CPF ou CNPJ *</label>
+                            <input type="text" id="cpf_cnpj" name="cpf_cnpj" class="form-input" placeholder="Apenas números" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="endereco" class="form-label">Endereço *</label>
+                            <textarea id="endereco" name="endereco" class="form-textarea" rows="3" placeholder="Rua, número, bairro, cidade, estado" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="categoria" class="form-label">Categoria *</label>
+                            <select id="categoria" name="categoria" class="form-select" required>
+                                <option value="">Selecione</option>
+                                <option value="mecanico">Mecânico</option>
+                                <option value="oficina">Oficina</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-cadastrar">Cadastrar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
