@@ -1,7 +1,7 @@
 {
-  "name": "node-express-web",
+  "name": "motohelp",
   "version": "1.0.0",
-  "description": "",
+  "description": "trabalho de conclusao de curso",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
@@ -15,6 +15,7 @@
     "dotenv": "^17.2.2",
     "ejs": "^3.1.9",
     "express": "^4.21.2",
+    "firebase": "^12.3.0",
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {

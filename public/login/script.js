@@ -104,3 +104,74 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+const firebaseConfig = { 
+  apiKey: "AIzaSyCVfkVtnPU_YRGjCyoJAamPXgjB60avEyk",
+  authDomain: "motohelp-c808b.firebaseapp.com",
+  databaseURL: "https://motohelp-c808b-default-rtdb.firebaseio.com",
+  projectId: "motohelp-c808b",
+  storageBucket: "motohelp-c808b.firebasestorage.app",
+  messagingSenderId: "338786673596",
+  appId: "1:338786673596:web:7f58297d48f7392b4381b9",
+  measurementId: "G-D76C6EV586"
+};
+firebase.initializeApp(firebaseConfig);
+
+// --- 2. LÓGICA DE AUTENTICAÇÃO ---
+const googleLoginButton = document.getElementById('googleLoginButton');
+
+googleLoginButton.addEventListener('click', async () => {
+  try {
+    // Passo 1: Fazer login com Google
+    const auth = firebase.auth();
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+    console.log('Abrindo pop-up de login do Google...');
+    const { user: firebaseUser } = await auth.signInWithPopup(googleProvider);
+
+    if (!firebaseUser) {
+      throw new Error('Login com Google falhou. Nenhum usuário retornado.');
+    }
+
+    console.log('Login com Google (Firebase) bem-sucedido:', firebaseUser.displayName);
+
+    // Passo 2: Obter token JWT do Firebase
+    console.log('Obtendo token JWT do Firebase...');
+    const firebaseToken = await firebaseUser.getIdToken();
+
+    // Passo 3: Login no Supabase usando o token
+    console.log('Autenticando no Supabase com o token...');
+    const { data, error: supabaseError } = await supabase.auth.signInWithIdToken({
+      provider: 'firebase',
+      token: firebaseToken,
+    });
+
+    if (supabaseError) {
+      throw supabaseError;
+    }
+
+    console.log('Login no Supabase bem-sucedido!', data.user.email);
+    alert('Login realizado com sucesso! Redirecionando...');
+    
+    // Passo 4: Redirecionar
+    window.location.href = '/home.html';
+
+  } catch (error) {
+    console.error('Erro durante o login:', error);
+    alert(`Erro no login: ${error.message}`);
+  }
+});
+
+// --- 3. Manter sessão se recarregar a página ---
+firebase.auth().onAuthStateChanged(async (user) => {
+  if (user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const firebaseToken = await user.getIdToken();
+      await supabase.auth.signInWithIdToken({
+        provider: 'firebase',
+        token: firebaseToken,
+      });
+    }
+  }
+});
