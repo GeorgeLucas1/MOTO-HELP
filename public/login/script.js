@@ -1,177 +1,106 @@
-//=============== ARQUIVO: login/script.js ===============
-// (Nenhuma alteração necessária, código pronto para uso)
+//=============== ARQUIVO: login/script.js (VERSÃO CORRETA E LIMPA) ===============
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Supabase Client Initialization ---
-    const SUPABASE_URL = 'https://xyelsqywlwihbdgncilk.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWxzcXl3bHdpaGJkZ25jaWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNDU3OTQsImV4cCI6MjA3MzYyMTc5NH0.0agkUvqX2EFL2zYbOW8crEwtmHd_WzZvuf-jzb2VkW8';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
+  // --- 1. INICIALIZAÇÃO DOS SERVIÇOS ---
 
-    // --- DOM Element References ---
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    const openRegisterModal = document.getElementById('openRegisterModal');
-    const closeModal = document.getElementById('closeModal');
-    const cancelRegister = document.getElementById('cancelRegister');
-    const modalOverlay = document.getElementById('modalOverlay');
+  // Configuração do Supabase
+  const SUPABASE_URL = 'https://xyelsqywlwihbdgncilk.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWxzcXl3bHdpaGJkZ25jaWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNDU3OTQsImV4cCI6MjA3MzYyMTc5NH0.0agkUvqX2EFL2zYbOW8crEwtmHd_WzZvuf-jzb2VkW8';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
 
-    // --- Modal Handling ---
-    const openModal = () => {
-        modalOverlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    };
+  // Configuração do Firebase
+  const firebaseConfig = {
+      apiKey: "AIzaSyCVfkVtnPU_YRGjCyoJAamPXgjB60avEyk",
+      authDomain: "motohelp-c808b.firebaseapp.com",
+      projectId: "motohelp-c808b",
+      storageBucket: "motohelp-c808b.appspot.com", // Corrigido para o domínio correto do storage
+      messagingSenderId: "338786673596",
+      appId: "1:338786673596:web:7f58297d48f7392b4381b9"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
 
-    const closeModalFunction = () => {
-        modalOverlay.classList.remove('active');
-        document.body.style.overflow = '';
-        registerForm.reset();
-    };
-
-    openRegisterModal.addEventListener('click', openModal);
-    closeModal.addEventListener('click', closeModalFunction);
-    cancelRegister.addEventListener('click', closeModalFunction);
-    modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) closeModalFunction();
-    });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modalOverlay.classList.contains('active')) closeModalFunction();
-    });
-
-    // --- Login Form Handler ---
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('senha').value;
-
-        if (!email || !password) {
-            alert('Por favor, preencha o email e a senha.');
-            return;
-        }
-
-        try {
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) throw error;
-
-            if (data.user) {
-                alert('Login realizado com sucesso!');
-                window.location.href = '../home/index.html';
-            } else {
-                alert('Nenhum usuário encontrado com essas credenciais.');
-            }
-        } catch (error) {
-            console.error('Erro no login:', error);
-            alert(`Erro no login: ${error.message}`);
-        }
-    });
-
-    // --- Register Form Handler ---
-    registerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nome = document.getElementById('regNome').value;
-        const email = document.getElementById('regEmail').value;
-        const password = document.getElementById('regSenha').value;
-        const confirmarSenha = document.getElementById('regConfirmarSenha').value;
-
-        if (!nome || !email || !password || !confirmarSenha) {
-            alert('Por favor, preencha todos os campos.');
-            return;
-        }
-        if (password !== confirmarSenha) {
-            alert('As senhas não coincidem.');
-            return;
-        }
-        if (password.length < 6) {
-            alert('A senha deve ter pelo menos 6 caracteres.');
-            return;
-        }
-
-        try {
-            const { data, error } = await supabase.auth.signUp({
-                email: email,
-                password: password,
-                options: { data: { full_name: nome } }
-            });
-
-            if (error) throw error;
-
-            if (data.user) {
-                alert('Cadastro realizado! Por favor, verifique seu e-mail para confirmar a conta antes de fazer o login.');
-                closeModalFunction();
-            }
-        } catch (error) {
-            console.error('Erro no cadastro:', error);
-            alert(`Erro no cadastro: ${error.message}`);
-        }
-    });
-});
-
-const firebaseConfig = { 
-  apiKey: "AIzaSyCVfkVtnPU_YRGjCyoJAamPXgjB60avEyk",
-  authDomain: "motohelp-c808b.firebaseapp.com",
-  databaseURL: "https://motohelp-c808b-default-rtdb.firebaseio.com",
-  projectId: "motohelp-c808b",
-  storageBucket: "motohelp-c808b.firebasestorage.app",
-  messagingSenderId: "338786673596",
-  appId: "1:338786673596:web:7f58297d48f7392b4381b9",
-  measurementId: "G-D76C6EV586"
-};
-firebase.initializeApp(firebaseConfig);
-
-// --- 2. LÓGICA DE AUTENTICAÇÃO ---
-const googleLoginButton = document.getElementById('googleLoginButton');
-
-googleLoginButton.addEventListener('click', async () => {
-  try {
-    // Passo 1: Fazer login com Google
-    const auth = firebase.auth();
-    const googleProvider = new firebase.auth.GoogleAuthProvider();
-
-    console.log('Abrindo pop-up de login do Google...');
-    const { user: firebaseUser } = await auth.signInWithPopup(googleProvider);
-
-    if (!firebaseUser) {
-      throw new Error('Login com Google falhou. Nenhum usuário retornado.');
-    }
-
-    console.log('Login com Google (Firebase) bem-sucedido:', firebaseUser.displayName);
-
-    // Passo 2: Obter token JWT do Firebase
-    console.log('Obtendo token JWT do Firebase...');
-    const firebaseToken = await firebaseUser.getIdToken();
-
-    // Passo 3: Login no Supabase usando o token
-    console.log('Autenticando no Supabase com o token...');
-    const { data, error: supabaseError } = await supabase.auth.signInWithIdToken({
-      provider: 'firebase',
-      token: firebaseToken,
-    });
-
-    if (supabaseError) {
-      throw supabaseError;
-    }
-
-    console.log('Login no Supabase bem-sucedido!', data.user.email);
-    alert('Login realizado com sucesso! Redirecionando...');
-    
-    // Passo 4: Redirecionar
-    window.location.href = '/home.html';
-
-  } catch (error) {
-    console.error('Erro durante o login:', error);
-    alert(`Erro no login: ${error.message}`);
-  }
-});
-
-// --- 3. Manter sessão se recarregar a página ---
-firebase.auth().onAuthStateChanged(async (user) => {
-  if (user) {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      const firebaseToken = await user.getIdToken();
-      await supabase.auth.signInWithIdToken({
-        provider: 'firebase',
-        token: firebaseToken,
+  // --- 2. REFERÊNCIAS DO DOM ---
+  const loginForm = document.getElementById('loginForm');
+  const registerForm = document.getElementById('registerForm');
+  const googleLoginButton = document.getElementById('googleLoginButton');
+  
+  // Assumindo que você tem um botão para abrir o modal de cadastro
+  const openRegisterModal = document.getElementById('openRegisterModal');
+  if(openRegisterModal) {
+      openRegisterModal.addEventListener('click', () => {
+          // Adicione sua lógica para mostrar o modal de cadastro
+          document.getElementById('modalOverlay').classList.add('active');
       });
-    }
+  }
+
+
+  // --- 3. FUNÇÃO CENTRAL DE LOGIN NO SUPABASE ---
+  async function signInToSupabase(firebaseUser) {
+      try {
+          const firebaseToken = await firebaseUser.getIdToken();
+          const { error } = await supabase.auth.signInWithIdToken({
+              provider: 'firebase',
+              token: firebaseToken,
+          });
+          if (error) throw error;
+          
+          console.log('Sessão do Supabase sincronizada com sucesso!');
+          window.location.href = '../home/index.html'; // Redireciona para a home
+      } catch (error) {
+          console.error('Erro ao sincronizar com Supabase:', error);
+          alert(`Erro crítico ao acessar o serviço: ${error.message}`);
+      }
+  }
+
+  // --- 4. MANIPULADORES DE EVENTOS (HANDLERS) ---
+
+  // Login com E-mail/Senha via Firebase
+  if (loginForm) {
+      loginForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const email = document.getElementById('email').value;
+          const password = document.getElementById('senha').value;
+          try {
+              const { user } = await auth.signInWithEmailAndPassword(email, password);
+              alert('Login (Firebase) bem-sucedido! Sincronizando...');
+              await signInToSupabase(user);
+          } catch (error) {
+              alert(`Erro no login: ${error.message}`);
+          }
+      });
+  }
+
+  // Cadastro com E-mail/Senha via Firebase
+  if (registerForm) {
+      registerForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const email = document.getElementById('regEmail').value;
+          const password = document.getElementById('regSenha').value;
+          try {
+              const { user } = await auth.createUserWithEmailAndPassword(email, password);
+              alert('Cadastro (Firebase) bem-sucedido! Sincronizando...');
+              await signInToSupabase(user);
+          } catch (error) {
+              alert(`Erro no cadastro: ${error.message}`);
+          }
+      });
+  }
+
+  // Login com Google via Firebase
+  if (googleLoginButton) {
+      googleLoginButton.addEventListener('click', async () => {
+          const googleProvider = new firebase.auth.GoogleAuthProvider();
+          try {
+              const { user } = await auth.signInWithPopup(googleProvider);
+              alert('Login com Google (Firebase) bem-sucedido! Sincronizando...');
+              await signInToSupabase(user);
+          } catch (error) {
+              // Não mostra o alerta se o usuário simplesmente fechou o pop-up
+              if (error.code !== 'auth/popup-closed-by-user') {
+                  alert(`Erro no login com Google: ${error.message}`);
+              }
+          }
+      });
   }
 });
