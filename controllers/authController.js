@@ -33,3 +33,16 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Erro ao fazer login.', error: error.message });
   }
 };
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    const { user } = req;
+
+    const data = await AuthModel.resetPassword(user, newPassword);
+
+    res.json({ message: 'Senha redefinida com sucesso!', data });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao redefinir a senha.', error: error.message });
+  }
+};

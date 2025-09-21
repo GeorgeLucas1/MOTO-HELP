@@ -1,0 +1,161 @@
+/* =========================
+   Reset básico
+========================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  body {
+    background: #f5f5f5; /* fundo claro */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* =========================
+     Header
+  ========================= */
+  .header {
+    background: #fff;
+    border-bottom: 2px solid #e53935; /* detalhe vermelho */
+    padding: 15px 0;
+  }
+  
+  .header .logo {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .logo-img {
+    height: 60px;
+  }
+  
+  /* =========================
+     Main Section
+  ========================= */
+  .main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px 15px;
+  }
+  
+  .container {
+    max-width: 450px;
+    width: 100%;
+  }
+  
+  /* =========================
+     Card de redefinição
+  ========================= */
+  .login-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    padding: 30px 25px;
+    text-align: center;
+  }
+  
+  .login-title {
+    font-size: 1.4rem;
+    color: #e53935;
+    margin-bottom: 10px;
+  }
+  
+  .reset-subtitle {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 20px;
+  }
+  
+  /* =========================
+     Mensagens
+  ========================= */
+  #errorMessage {
+    color: #d32f2f;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    display: none;
+  }
+  
+  #successMessage {
+    color: #388e3c;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    display: none;
+  }
+  
+  /* =========================
+     Formulário
+  ========================= */
+  .form-group {
+    text-align: left;
+    margin-bottom: 15px;
+  }
+  
+  .form-label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+  }
+  
+  .form-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: 0.3s ease;
+  }
+  
+  .form-input:focus {
+    outline: none;
+    border-color: #e53935;
+    box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.15);
+  }
+  
+  /* =========================
+     Botão
+  ========================= */
+  .btn {
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s ease;
+  }
+  
+  .btn-primary {
+    background: #e53935;
+    color: #fff;
+  }
+  
+  .btn-primary:hover {
+    background: #c62828;
+  }
+  
+  .btn-full {
+    width: 100%;
+  }
+  
+  /* =========================
+     Responsividade
+  ========================= */
+  @media (max-width: 480px) {
+    .login-card {
+      padding: 25px 20px;
+    }
+  
+    .login-title {
+      font-size: 1.2rem;
+    }
+  }
+  

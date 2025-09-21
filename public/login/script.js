@@ -1,106 +1,113 @@
-//=============== ARQUIVO: login/script.js (VERSÃO CORRETA E LIMPA) ===============
+//=============== ARQUIVO: login/script.js (VERSÃO COMPLETA E CORRIGIDA) ===============
 
-document.addEventListener('DOMContentLoaded', () => {
-  // --- 1. INICIALIZAÇÃO DOS SERVIÇOS ---
-
-  // Configuração do Supabase
+// Envolvemos todo o código em um bloco 'try...catch' para garantir que, se a inicialização falhar,
+// o usuário receba um aviso claro e o script não quebre a página.
+try {
+  // --- 1. INICIALIZAÇÃO DO SERVIÇO SUPABASE ---
+  // A variável 'supabase' agora está disponível para todo o código dentro deste bloco 'try'.
   const SUPABASE_URL = 'https://xyelsqywlwihbdgncilk.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWxzcXl3bHdpaGJkZ25jaWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNDU3OTQsImV4cCI6MjA3MzYyMTc5NH0.0agkUvqX2EFL2zYbOW8crEwtmHd_WzZvuf-jzb2VkW8';
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
 
-  // Configuração do Firebase
-  const firebaseConfig = {
-      apiKey: "AIzaSyCVfkVtnPU_YRGjCyoJAamPXgjB60avEyk",
-      authDomain: "motohelp-c808b.firebaseapp.com",
-      projectId: "motohelp-c808b",
-      storageBucket: "motohelp-c808b.appspot.com", // Corrigido para o domínio correto do storage
-      messagingSenderId: "338786673596",
-      appId: "1:338786673596:web:7f58297d48f7392b4381b9"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  // --- 2. REFERÊNCIAS DO DOM ---
+  // --- 2. REFERÊNCIAS AOS ELEMENTOS DO DOM ---
   const loginForm = document.getElementById('loginForm');
   const registerForm = document.getElementById('registerForm');
-  const googleLoginButton = document.getElementById('googleLoginButton');
-  
-  // Assumindo que você tem um botão para abrir o modal de cadastro
+  const modalOverlay = document.getElementById('modalOverlay');
   const openRegisterModal = document.getElementById('openRegisterModal');
-  if(openRegisterModal) {
-      openRegisterModal.addEventListener('click', () => {
-          // Adicione sua lógica para mostrar o modal de cadastro
-          document.getElementById('modalOverlay').classList.add('active');
-      });
-  }
+  const closeModalButton = document.getElementById('closeModal');
+  const cancelRegisterButton = document.getElementById('cancelRegister');
+  const forgotPasswordLink = document.getElementById('forgotPasswordLink'); // Referência para o link
 
+  // --- 3. LÓGICA DE CONTROLE DO MODAL DE CADASTRO ---
+  const showModal = () => modalOverlay.classList.add('active');
+  const hideModal = () => modalOverlay.classList.remove('active');
 
-  // --- 3. FUNÇÃO CENTRAL DE LOGIN NO SUPABASE ---
-  async function signInToSupabase(firebaseUser) {
-      try {
-          const firebaseToken = await firebaseUser.getIdToken();
-          const { error } = await supabase.auth.signInWithIdToken({
-              provider: 'firebase',
-              token: firebaseToken,
-          });
-          if (error) throw error;
-          
-          console.log('Sessão do Supabase sincronizada com sucesso!');
-          window.location.href = '../home/index.html'; // Redireciona para a home
-      } catch (error) {
-          console.error('Erro ao sincronizar com Supabase:', error);
-          alert(`Erro crítico ao acessar o serviço: ${error.message}`);
-      }
-  }
+  if (openRegisterModal) openRegisterModal.addEventListener('click', showModal);
+  if (closeModalButton) closeModalButton.addEventListener('click', hideModal);
+  if (cancelRegisterButton) cancelRegisterButton.addEventListener('click', hideModal);
 
-  // --- 4. MANIPULADORES DE EVENTOS (HANDLERS) ---
+  // --- 4. MANIPULADORES DE EVENTOS DE AUTENTICAÇÃO ---
 
-  // Login com E-mail/Senha via Firebase
+  /**
+   * LOGIN COM E-MAIL/SENHA (via SUPABASE)
+   */
   if (loginForm) {
       loginForm.addEventListener('submit', async (e) => {
           e.preventDefault();
           const email = document.getElementById('email').value;
           const password = document.getElementById('senha').value;
+
           try {
-              const { user } = await auth.signInWithEmailAndPassword(email, password);
-              alert('Login (Firebase) bem-sucedido! Sincronizando...');
-              await signInToSupabase(user);
+              const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+              if (error) throw error;
+
+              if (data.user) {
+                  alert('Login realizado com sucesso!');
+                  window.location.href = '../home/index.html';
+              }
           } catch (error) {
               alert(`Erro no login: ${error.message}`);
           }
       });
   }
 
-  // Cadastro com E-mail/Senha via Firebase
+  /**
+   * CADASTRO COM E-MAIL/SENHA (via SUPABASE)
+   */
   if (registerForm) {
       registerForm.addEventListener('submit', async (e) => {
           e.preventDefault();
           const email = document.getElementById('regEmail').value;
           const password = document.getElementById('regSenha').value;
+          const confirmPassword = document.getElementById('regConfirmarSenha').value;
+
+          if (password !== confirmPassword) {
+              alert('As senhas não coincidem.');
+              return;
+          }
+
           try {
-              const { user } = await auth.createUserWithEmailAndPassword(email, password);
-              alert('Cadastro (Firebase) bem-sucedido! Sincronizando...');
-              await signInToSupabase(user);
+              const { data, error } = await supabase.auth.signUp({ email, password });
+              if (error) throw error;
+
+              if (data.user) {
+                  alert('Cadastro realizado! Verifique seu e-mail para confirmar a conta antes de fazer o login.');
+                  hideModal(); // Fecha o modal após o sucesso
+              }
           } catch (error) {
               alert(`Erro no cadastro: ${error.message}`);
           }
       });
   }
 
-  // Login com Google via Firebase
-  if (googleLoginButton) {
-      googleLoginButton.addEventListener('click', async () => {
-          const googleProvider = new firebase.auth.GoogleAuthProvider();
+  /**
+   * ESQUECEU A SENHA (via SUPABASE)
+   * Este bloco foi movido para DENTRO do 'try' para ter acesso à variável 'supabase'.
+   */
+  if (forgotPasswordLink) {
+      forgotPasswordLink.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const email = prompt("Por favor, digite seu e-mail para receber o link de redefinição:");
+
+          if (!email) return; // O usuário cancelou o prompt
+
           try {
-              const { user } = await auth.signInWithPopup(googleProvider);
-              alert('Login com Google (Firebase) bem-sucedido! Sincronizando...');
-              await signInToSupabase(user);
+              // Agora esta chamada funciona, pois 'supabase' está definido neste escopo.
+              const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                  redirectTo: `${window.location.origin}/reset-password.html`,
+              });
+
+              if (error) throw error;
+
+              alert('Link de redefinição enviado! Verifique sua caixa de entrada e a pasta de spam.');
+
           } catch (error) {
-              // Não mostra o alerta se o usuário simplesmente fechou o pop-up
-              if (error.code !== 'auth/popup-closed-by-user') {
-                  alert(`Erro no login com Google: ${error.message}`);
-              }
+              alert(`Erro ao enviar e-mail: ${error.message}`);
           }
       });
   }
-});
+
+} catch (error) {
+  console.error("Erro fatal na inicialização dos scripts de login:", error);
+  alert("Ocorreu um erro crítico ao carregar a página. Por favor, recarregue e tente novamente.");
+}

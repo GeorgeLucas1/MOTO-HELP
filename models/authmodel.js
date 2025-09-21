@@ -45,6 +45,18 @@ class AuthModel {
 
     return data;
   }
+
+  static async resetPassword(user, newPassword) {
+    const { data, error } = await supabase.auth.updateUser(user, {
+      password: newPassword,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  }
 }
 
 module.exports = AuthModel;

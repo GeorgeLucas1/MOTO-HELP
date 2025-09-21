@@ -7,17 +7,20 @@ const app = express();
 
 const port = parseInt(process.env.PORT) || process.argv[3] || 8080;
 
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login', 'index.html'));
+  res.render('login');
 });
 
 app.use('/', routes);
 
 app.listen(port, () => {
-  console.log(`Listening on http://localhost:${port}`);
+  console.log(`servidor localhost ativado com sucesso em http://localhost:${port}`);
 })
