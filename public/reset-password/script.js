@@ -1,22 +1,30 @@
-// Seletores de elementos (sem alterações)
+// Seletores de elementos
 const resetPasswordForm = document.getElementById('resetPasswordForm');
 const statusMessageEl = document.getElementById('statusMessage');
 const errorMessageEl = document.getElementById('errorMessage');
 const successMessageEl = document.getElementById('successMessage');
 
-// Inicialização do cliente Supabase (sem alterações)
+// Inicialização do cliente Supabase
 const supabase = window.supabase.createClient(
   'https://xyelsqywlwihbdgncilk.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWxzcXl3bHdpaGJkZ25jaWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNDU3OTQsImV4cCI6MjA3MzYyMTc5NH0.0agkUvqX2EFL2zYbOW8crEwtmHd_WzZvuf-jzb2VkW8'
  );
 
-// Funções de mensagens (sem alterações)
-const showMessage = (element, message) => { /* ... */ };
-const hideMessages = () => { /* ... */ };
+// Funções de mensagens (IMPLEMENTAÇÃO COMPLETA)
+const showMessage = (element, message) => {
+  if (element) {
+    element.textContent = message;
+    element.style.display = 'block';
+  }
+};
 
-// --- MUDANÇA IMPORTANTE AQUI ---
-// Vamos declarar a variável do token fora do escopo inicial
-// para que possamos usá-la mais tarde no evento de submit.
+const hideMessages = () => {
+  if (errorMessageEl) errorMessageEl.style.display = 'none';
+  if (successMessageEl) successMessageEl.style.display = 'none';
+  if (statusMessageEl) statusMessageEl.style.display = 'none';
+};
+
+// Variável para armazenar o token
 let recoveryToken = null;
 
 // 1. Verifica a URL, armazena o token e mostra o formulário
@@ -26,9 +34,7 @@ let recoveryToken = null;
   const tokenType = params.get("token_type");
 
   if (accessToken && tokenType === "recovery") {
-    // Armazena o token na nossa variável global
     recoveryToken = accessToken;
-    
     hideMessages();
     showMessage(statusMessageEl, "Link válido. Por favor, defina sua nova senha.");
     resetPasswordForm.style.display = 'block';
@@ -41,12 +47,11 @@ let recoveryToken = null;
 
 // 2. Listener do formulário para ATUALIZAR a senha
 resetPasswordForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  // Verifica se o token foi capturado. Se não, algo deu muito errado.
+  e.preventDefault(); // Impede o recarregamento da página
+
   if (!recoveryToken) {
-      showMessage(errorMessageEl, 'Sessão de recuperação não encontrada. Por favor, use o link do seu e-mail novamente.');
-      return;
+    showMessage(errorMessageEl, 'Sessão de recuperação não encontrada. Por favor, use o link do seu e-mail novamente.');
+    return;
   }
 
   hideMessages();
@@ -54,20 +59,24 @@ resetPasswordForm.addEventListener('submit', async (e) => {
   const newPassword = document.getElementById('newPassword').value;
   const confirmNewPassword = document.getElementById('confirmNewPassword').value;
 
-  if (newPassword.length < 6) { /* ... validações ... */ }
-  if (newPassword !== confirmNewPassword) { /* ... validações ... */ }
+  // Validações completas com mensagens de erro
+  if (newPassword.length < 6) {
+    showMessage(errorMessageEl, 'A senha deve ter pelo menos 6 caracteres.');
+    return;
+  }
+  if (newPassword !== confirmNewPassword) {
+    showMessage(errorMessageEl, 'As senhas não coincidem.');
+    return;
+  }
 
   const submitButton = resetPasswordForm.querySelector('button[type="submit"]');
   submitButton.disabled = true;
   submitButton.textContent = 'Atualizando...';
 
   try {
-    // --- MUDANÇA CRUCIAL AQUI ---
-    // Passamos o token de recuperação junto com a nova senha.
-    // Isso informa ao Supabase qual sessão de usuário deve ser atualizada.
     const { error } = await supabase.auth.updateUser(
       { password: newPassword },
-      { accessToken: recoveryToken } // Opção adicionada
+      { accessToken: recoveryToken }
     );
     
     if (error) throw error;
@@ -80,7 +89,6 @@ resetPasswordForm.addEventListener('submit', async (e) => {
     }, 3000);
 
   } catch (error) {
-    // O erro "Auth session missing!" não deve mais acontecer.
     showMessage(errorMessageEl, `Erro ao atualizar a senha: ${error.message}`);
     submitButton.disabled = false;
     submitButton.textContent = 'Definir Nova Senha';
