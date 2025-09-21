@@ -21,8 +21,7 @@ const hideMessages = () => {
   statusMessageEl.style.display = 'none';
 };
 
-// 1) Pega o token da URL e cria a sessão (CÓDIGO CORRIGIDO)
-(async () => {
+(() => {
   // Extrai os parâmetros do HASH (#) da URL, não da query string (?)
   // Ex: #access_token=...&type=recovery
   const hashFragment = window.location.hash.substring(1); // Remove o '#' inicial
@@ -31,15 +30,15 @@ const hideMessages = () => {
   const accessToken = params.get("access_token");
   const type = params.get("type"); // O parâmetro é 'type', não 'token'
 
-  if (accessToken && type === "recovery") {
-    // O evento 'PASSWORD_RECOVERY' será disparado automaticamente pelo Supabase
-    // ao detectar os parâmetros de recuperação na URL. Não é necessário setSession manualmente.
-    // O listener onAuthStateChange cuidará de mostrar o formulário.
-    showMessage(statusMessageEl, "Verificando link de recuperação...");
-  } else {
+  // Apenas verifica se os parâmetros necessários existem na URL.
+  // O listener onAuthStateChange fará o trabalho pesado.
+  if (!accessToken || type !== "recovery") {
     hideMessages();
-    showMessage(errorMessageEl, "Link de recuperação inválido ou ausente.");
-    resetPasswordForm.style.display = 'none'; // Garante que o form não apareça
+    showMessage(errorMessageEl, "Link de recuperação inválido, expirado ou já utilizado.");
+    resetPasswordForm.style.display = 'none'; // Garante que o formulário não apareça
+  } else {
+    // Se os parâmetros existem, mostra uma mensagem de status enquanto o Supabase processa.
+    showMessage(statusMessageEl, "Verificando link de recuperação...");
   }
 })();
 
