@@ -1,60 +1,84 @@
-// Seletores e cliente Supabase (sem alterações)
+// Seletores de elementos (sem alterações)
 const resetPasswordForm = document.getElementById('resetPasswordForm');
 const statusMessageEl = document.getElementById('statusMessage');
 const errorMessageEl = document.getElementById('errorMessage');
 const successMessageEl = document.getElementById('successMessage');
 
+// Inicialização do cliente Supabase (sem alterações)
 const supabase = window.supabase.createClient(
   'https://xyelsqywlwihbdgncilk.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWxzcXl3bHdpaGJkZ25jaWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNDU3OTQsImV4cCI6MjA3MzYyMTc5NH0.0agkUvqX2EFL2zYbOW8crEwtmHd_WzZvuf-jzb2VkW8'
  );
 
-// Funções de mensagem (sem alterações)
-const showMessage = (element, message) => { /* ... */ };
-const hideMessages = () => { /* ... */ };
+// Funções de mensagens (sem alterações)
+const showMessage = (element, message) => {
+  element.textContent = message;
+  element.style.display = 'block';
+};
+const hideMessages = () => {
+  errorMessageEl.style.display = 'none';
+  successMessageEl.style.display = 'none';
+  statusMessageEl.style.display = 'none';
+};
 
-// 1) Pega o token da URL e cria a sessão (VERSÃO CORRIGIDA PARA USAR '?' E 'token_type')
-(async () => {
-  // A URL usa '?', então window.location.search está CORRETO.
+// 1. Verifica a URL e mostra o formulário
+(() => {
   const params = new URLSearchParams(window.location.search);
-  
   const accessToken = params.get("access_token");
-  // O nome do parâmetro no seu link é 'token_type', não 'token' ou 'type'.
-  const tokenType = params.get("token_type"); 
+  const tokenType = params.get("token_type");
 
+  // Se o access_token existe e o tipo é 'recovery', o usuário está pronto para redefinir.
   if (accessToken && tokenType === "recovery") {
-    // Com os parâmetros na query string, precisamos definir a sessão manualmente.
-    const { error } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: accessToken // Para recuperação, pode-se passar o mesmo token.
-    });
-
-    if (error) {
-      hideMessages();
-      // Este erro provavelmente acontecerá se o token estiver quebrado (como está agora)
-      showMessage(errorMessageEl, "Link de recuperação inválido ou expirado. Verifique se o link foi copiado corretamente.");
-      console.error("Erro ao definir a sessão:", error.message);
-    } else {
-       // Se a sessão for definida com sucesso, o onAuthStateChange será disparado.
-       hideMessages();
-       showMessage(statusMessageEl, "Link válido. Carregando formulário...");
-    }
+    hideMessages();
+    showMessage(statusMessageEl, "Link válido. Por favor, defina sua nova senha.");
+    resetPasswordForm.style.display = 'block';
   } else {
     hideMessages();
-    showMessage(errorMessageEl, "Link inválido ou ausente.");
+    showMessage(errorMessageEl, "Link de recuperação inválido, expirado ou já utilizado.");
+    resetPasswordForm.style.display = 'none';
   }
 })();
 
-// 2) Ouve o evento de recuperação (sem alterações)
-supabase.auth.onAuthStateChange(async (event, session) => {
-  if (event === "PASSWORD_RECOVERY") {
-    hideMessages();
-    showMessage(statusMessageEl, "Sessão de recuperação válida. Defina sua nova senha.");
-    resetPasswordForm.style.display = 'block';
-  }
-});
-
-// 3) Envia nova senha (sem alterações)
+// 2. Listener do formulário para ATUALIZAR a senha
 resetPasswordForm.addEventListener('submit', async (e) => {
-  // ... seu código aqui ...
+  e.preventDefault();
+  hideMessages();
+
+  const newPassword = document.getElementById('newPassword').value;
+  const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+  if (newPassword.length < 6) {
+    showMessage(errorMessageEl, 'A senha deve ter pelo menos 6 caracteres.');
+    return;
+  }
+  if (newPassword !== confirmNewPassword) {
+    showMessage(errorMessageEl, 'As senhas não coincidem.');
+    return;
+  }
+
+  // Desabilitar o botão para evitar múltiplos envios
+  const submitButton = resetPasswordForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  submitButton.textContent = 'Atualizando...';
+
+  try {
+    // O access_token da URL já autenticou o cliente Supabase temporariamente.
+    // A chamada updateUser funcionará diretamente.
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+
+    resetPasswordForm.style.display = 'none';
+    showMessage(successMessageEl, 'Senha atualizada com sucesso! Redirecionando para a página de login...');
+
+    setTimeout(() => {
+      // Redirecione para sua página de login
+      window.location.href = '/login.html'; 
+    }, 3000);
+
+  } catch (error) {
+    showMessage(errorMessageEl, `Erro ao atualizar a senha: ${error.message}`);
+    // Reabilitar o botão em caso de erro
+    submitButton.disabled = false;
+    submitButton.textContent = 'Definir Nova Senha';
+  }
 });
