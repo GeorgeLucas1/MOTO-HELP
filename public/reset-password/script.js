@@ -23,7 +23,7 @@ const hideMessages = () => {
 (async () => {
   const params = new URLSearchParams(window.location.search);
   const accessToken = params.get("access_token");
-  const type = params.get("type");
+  const type = params.get("token_type");
 
   if (accessToken && type === "recovery") {
     const { data, error } = await supabase.auth.setSession({
