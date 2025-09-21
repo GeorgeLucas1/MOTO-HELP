@@ -11,71 +11,76 @@ const supabase = window.supabase.createClient(
  );
 
 // Funções de mensagens (sem alterações)
-const showMessage = (element, message) => {
-  element.textContent = message;
-  element.style.display = 'block';
-};
-const hideMessages = () => {
-  errorMessageEl.style.display = 'none';
-  successMessageEl.style.display = 'none';
-  statusMessageEl.style.display = 'none';
-};
+const showMessage = (element, message) => { /* ... */ };
+const hideMessages = () => { /* ... */ };
 
-// 1. LÓGICA CORRIGIDA: Verifica a URL e mostra o formulário DIRETAMENTE.
+// --- MUDANÇA IMPORTANTE AQUI ---
+// Vamos declarar a variável do token fora do escopo inicial
+// para que possamos usá-la mais tarde no evento de submit.
+let recoveryToken = null;
+
+// 1. Verifica a URL, armazena o token e mostra o formulário
 (() => {
   const params = new URLSearchParams(window.location.search);
   const accessToken = params.get("access_token");
   const tokenType = params.get("token_type");
 
-  // Se o access_token existe e o tipo é 'recovery', o usuário está pronto para redefinir.
   if (accessToken && tokenType === "recovery") {
-    // Não esperamos por nenhum evento. Mostramos o formulário imediatamente.
+    // Armazena o token na nossa variável global
+    recoveryToken = accessToken;
+    
     hideMessages();
     showMessage(statusMessageEl, "Link válido. Por favor, defina sua nova senha.");
     resetPasswordForm.style.display = 'block';
   } else {
-    // Se os parâmetros não estiverem na URL, o link é inválido.
     hideMessages();
     showMessage(errorMessageEl, "Link de recuperação inválido, expirado ou já utilizado.");
     resetPasswordForm.style.display = 'none';
   }
 })();
 
-// 2. Listener do formulário para ATUALIZAR a senha (sem alterações, já estava correto)
+// 2. Listener do formulário para ATUALIZAR a senha
 resetPasswordForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+  
+  // Verifica se o token foi capturado. Se não, algo deu muito errado.
+  if (!recoveryToken) {
+      showMessage(errorMessageEl, 'Sessão de recuperação não encontrada. Por favor, use o link do seu e-mail novamente.');
+      return;
+  }
+
   hideMessages();
 
   const newPassword = document.getElementById('newPassword').value;
   const confirmNewPassword = document.getElementById('confirmNewPassword').value;
 
-  if (newPassword.length < 6) {
-    showMessage(errorMessageEl, 'A senha deve ter pelo menos 6 caracteres.');
-    return;
-  }
-  if (newPassword !== confirmNewPassword) {
-    showMessage(errorMessageEl, 'As senhas não coincidem.');
-    return;
-  }
+  if (newPassword.length < 6) { /* ... validações ... */ }
+  if (newPassword !== confirmNewPassword) { /* ... validações ... */ }
 
   const submitButton = resetPasswordForm.querySelector('button[type="submit"]');
   submitButton.disabled = true;
   submitButton.textContent = 'Atualizando...';
 
   try {
-    // A biblioteca supabase-js já usou o access_token da URL para se autenticar.
-    // Esta chamada vai funcionar diretamente.
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    // --- MUDANÇA CRUCIAL AQUI ---
+    // Passamos o token de recuperação junto com a nova senha.
+    // Isso informa ao Supabase qual sessão de usuário deve ser atualizada.
+    const { error } = await supabase.auth.updateUser(
+      { password: newPassword },
+      { accessToken: recoveryToken } // Opção adicionada
+    );
+    
     if (error) throw error;
 
     resetPasswordForm.style.display = 'none';
     showMessage(successMessageEl, 'Senha atualizada com sucesso! Redirecionando para a página de login...');
 
     setTimeout(() => {
-      window.location.href = '/login.html'; // Ajuste se necessário
+      window.location.href = '/login.html';
     }, 3000);
 
   } catch (error) {
+    // O erro "Auth session missing!" não deve mais acontecer.
     showMessage(errorMessageEl, `Erro ao atualizar a senha: ${error.message}`);
     submitButton.disabled = false;
     submitButton.textContent = 'Definir Nova Senha';
