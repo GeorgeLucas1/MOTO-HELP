@@ -4,7 +4,7 @@ const statusMessageEl = document.getElementById('statusMessage');
 const errorMessageEl = document.getElementById('errorMessage');
 const successMessageEl = document.getElementById('successMessage');
 
-// Inicialização do cliente Supabase (ainda necessário para outras funcionalidades)
+// Inicialização do cliente Supabase
 const supabase = window.supabase.createClient(
   'https://xyelsqywlwihbdgncilk.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWxzcXl3bHdpaGJkZ25jaWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNDU3OTQsImV4cCI6MjA3MzYyMTc5NH0.0agkUvqX2EFL2zYbOW8crEwtmHd_WzZvuf-jzb2VkW8'
@@ -24,34 +24,39 @@ const hideMessages = () => {
   if (statusMessageEl) statusMessageEl.style.display = 'none';
 };
 
-let recoveryAccessToken = null; // Renomeado para clareza
-
-// 1. LÓGICA PRINCIPAL: Define a sessão e depois mostra o formulário
+// 1. LÓGICA PRINCIPAL: Troca o token de recuperação por uma sessão e mostra o formulário
 (async () => {
   const params = new URLSearchParams(window.location.search);
-  const accessToken = params.get("access_token");
+  const recoveryToken = params.get("access_token"); // O token de recuperação
   const tokenType = params.get("token_type");
 
-  if (accessToken && tokenType === "recovery") {
-    recoveryAccessToken = accessToken; // Armazena o access_token
+  if (recoveryToken && tokenType === "recovery") {
+    hideMessages();
+    showMessage(statusMessageEl, "Verificando link de recuperação...");
 
-    // Tenta definir a sessão. Isso é importante para que o cliente Supabase
-    // tenha o usuário atual em seu estado interno, mesmo que não seja usado diretamente para updateUser.
-    const { error: sessionError } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: accessToken,
+    // --- MUDANÇA CRUCIAL AQUI ---
+    // Troca o token de recuperação por uma sessão real do Supabase.
+    // O 'type' deve ser 'recovery' para este fluxo.
+    const { data, error } = await supabase.auth.verifyOtp({
+      token: recoveryToken,
+      type: 'recovery',
     });
 
-    if (sessionError) {
-      // Se setSession falhar, o token é inválido ou expirado.
+    if (error) {
+      // Se a troca falhar, o token é inválido ou expirado.
       hideMessages();
-      showMessage(errorMessageEl, `Erro ao verificar o link: ${sessionError.message}`);
+      showMessage(errorMessageEl, `Erro ao verificar o link: ${error.message}`);
       resetPasswordForm.style.display = 'none';
-    } else {
-      // SUCESSO! A sessão está ativa. Agora podemos mostrar o formulário.
+    } else if (data.session) {
+      // SUCESSO! Uma sessão válida foi estabelecida.
       hideMessages();
       showMessage(statusMessageEl, "Link válido. Por favor, defina sua nova senha.");
       resetPasswordForm.style.display = 'block';
+    } else {
+      // Caso a sessão não seja retornada por algum motivo inesperado
+      hideMessages();
+      showMessage(errorMessageEl, "Erro inesperado ao validar o link. Tente novamente.");
+      resetPasswordForm.style.display = 'none';
     }
   } else {
     // Se não houver tokens na URL.
@@ -66,10 +71,8 @@ resetPasswordForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   hideMessages();
 
-  if (!recoveryAccessToken) {
-    showMessage(errorMessageEl, 'Sessão de recuperação não encontrada. Por favor, use o link do seu e-mail novamente.');
-    return;
-  }
+  // Não precisamos mais do recoveryAccessToken aqui, pois a sessão já foi estabelecida.
+  // O cliente Supabase agora sabe quem é o usuário.
 
   const newPassword = document.getElementById('newPassword').value;
   const confirmNewPassword = document.getElementById('confirmNewPassword').value;
@@ -83,33 +86,19 @@ resetPasswordForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  const submitButton = resetPasswordForm.querySelector('button[type="submit"]');
+  const submitButton = resetPasswordForm.querySelector('button[type="submit"]");
   submitButton.disabled = true;
   submitButton.textContent = 'Atualizando...';
 
   try {
-    // --- SOLUÇÃO ALTERNATIVA: Requisição HTTP direta para a API REST do Supabase ---
-    const SUPABASE_URL = 'https://xyelsqywlwihbdgncilk.supabase.co';
-    const API_ENDPOINT = `${SUPABASE_URL}/auth/v1/user`;
-
-    const response = await fetch(API_ENDPOINT, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${recoveryAccessToken}`, // Usa o access_token para autorização
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWxzcXl3bHdpaGJkZ25jaWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNDU3OTQsImV4cCI6MjA3MzYyMTc5NH0.0agkUvqX2EFL2zYbOW8crEwtmHd_WzZvuf-jzb2VkW8' // Sua chave anon
-      },
-      body: JSON.stringify({ password: newPassword })
+    // --- MUDANÇA AQUI ---
+    // Agora usamos supabase.auth.updateUser() diretamente, pois a sessão já foi estabelecida.
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
     });
+    
+    if (error) throw error;
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      // Se a resposta não for OK (status 2xx), significa um erro da API.
-      throw new Error(data.msg || data.message || 'Erro desconhecido ao atualizar a senha.');
-    }
-
-    // Se chegou aqui, a senha foi atualizada com sucesso.
     resetPasswordForm.style.display = 'none';
     showMessage(successMessageEl, 'Senha atualizada com sucesso! Redirecionando para a página de login...');
 
@@ -122,4 +111,4 @@ resetPasswordForm.addEventListener('submit', async (e) => {
     submitButton.disabled = false;
     submitButton.textContent = 'Definir Nova Senha';
   }
-})
+});
