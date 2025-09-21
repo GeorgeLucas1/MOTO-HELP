@@ -4,11 +4,11 @@ const statusMessageEl = document.getElementById('statusMessage');
 const errorMessageEl = document.getElementById('errorMessage');
 const successMessageEl = document.getElementById('successMessage');
 
-// Inicialização do cliente Supabase
+// Inicialização do cliente Supabase (ainda necessário para outras funcionalidades)
 const supabase = window.supabase.createClient(
   'https://xyelsqywlwihbdgncilk.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWxzcXl3bHdpaGJkZ25jaWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNDU3OTQsImV4cCI6MjA3MzYyMTc5NH0.0agkUvqX2EFL2zYbOW8crEwtmHd_WzZvuf-jzb2VkW8'
- );
+);
 
 // Funções de mensagens
 const showMessage = (element, message) => {
@@ -24,6 +24,8 @@ const hideMessages = () => {
   if (statusMessageEl) statusMessageEl.style.display = 'none';
 };
 
+let recoveryAccessToken = null; // Renomeado para clareza
+
 // 1. LÓGICA PRINCIPAL: Define a sessão e depois mostra o formulário
 (async () => {
   const params = new URLSearchParams(window.location.search);
@@ -31,17 +33,19 @@ const hideMessages = () => {
   const tokenType = params.get("token_type");
 
   if (accessToken && tokenType === "recovery") {
-    // PASSO 1: Tenta definir a sessão manualmente usando o token.
-    // Para recuperação, o refresh_token pode ser o mesmo que o access_token.
-    const { data, error } = await supabase.auth.setSession({
+    recoveryAccessToken = accessToken; // Armazena o access_token
+
+    // Tenta definir a sessão. Isso é importante para que o cliente Supabase
+    // tenha o usuário atual em seu estado interno, mesmo que não seja usado diretamente para updateUser.
+    const { error: sessionError } = await supabase.auth.setSession({
       access_token: accessToken,
       refresh_token: accessToken,
     });
 
-    if (error) {
+    if (sessionError) {
       // Se setSession falhar, o token é inválido ou expirado.
       hideMessages();
-      showMessage(errorMessageEl, `Erro ao verificar o link: ${error.message}`);
+      showMessage(errorMessageEl, `Erro ao verificar o link: ${sessionError.message}`);
       resetPasswordForm.style.display = 'none';
     } else {
       // SUCESSO! A sessão está ativa. Agora podemos mostrar o formulário.
@@ -62,6 +66,11 @@ resetPasswordForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   hideMessages();
 
+  if (!recoveryAccessToken) {
+    showMessage(errorMessageEl, 'Sessão de recuperação não encontrada. Por favor, use o link do seu e-mail novamente.');
+    return;
+  }
+
   const newPassword = document.getElementById('newPassword').value;
   const confirmNewPassword = document.getElementById('confirmNewPassword').value;
 
@@ -79,26 +88,38 @@ resetPasswordForm.addEventListener('submit', async (e) => {
   submitButton.textContent = 'Atualizando...';
 
   try {
-    // PASSO 2: Chama updateUser. Como a sessão já foi definida,
-    // não precisamos mais passar o accessToken aqui.
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-    
-    if (error) throw error;
+    // --- SOLUÇÃO ALTERNATIVA: Requisição HTTP direta para a API REST do Supabase ---
+    const SUPABASE_URL = 'https://xyelsqywlwihbdgncilk.supabase.co';
+    const API_ENDPOINT = `${SUPABASE_URL}/auth/v1/user`;
 
+    const response = await fetch(API_ENDPOINT, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${recoveryAccessToken}`, // Usa o access_token para autorização
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWxzcXl3bHdpaGJkZ25jaWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNDU3OTQsImV4cCI6MjA3MzYyMTc5NH0.0agkUvqX2EFL2zYbOW8crEwtmHd_WzZvuf-jzb2VkW8' // Sua chave anon
+      },
+      body: JSON.stringify({ password: newPassword })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Se a resposta não for OK (status 2xx), significa um erro da API.
+      throw new Error(data.msg || data.message || 'Erro desconhecido ao atualizar a senha.');
+    }
+
+    // Se chegou aqui, a senha foi atualizada com sucesso.
     resetPasswordForm.style.display = 'none';
-    showMessage(successMessageEl, 'Senha atualizada com sucesso! Redirecionando...');
+    showMessage(successMessageEl, 'Senha atualizada com sucesso! Redirecionando para a página de login...');
 
     setTimeout(() => {
       window.location.href = '/login.html';
     }, 3000);
 
   } catch (error) {
-    // Se o erro "Auth session missing!" aparecer de novo, há um problema fundamental
-    // na forma como o Supabase está configurado ou na versão da biblioteca.
     showMessage(errorMessageEl, `Erro ao atualizar a senha: ${error.message}`);
     submitButton.disabled = false;
     submitButton.textContent = 'Definir Nova Senha';
   }
-});
+})
