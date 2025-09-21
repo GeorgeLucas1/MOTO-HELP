@@ -1,14 +1,16 @@
+// Seletores de elementos do DOM (sem alterações)
 const resetPasswordForm = document.getElementById('resetPasswordForm');
 const statusMessageEl = document.getElementById('statusMessage');
 const errorMessageEl = document.getElementById('errorMessage');
 const successMessageEl = document.getElementById('successMessage');
 
+// Inicialização do cliente Supabase (sem alterações)
 const supabase = window.supabase.createClient(
   'https://xyelsqywlwihbdgncilk.supabase.co', // SUA URL DO SUPABASE
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWxzcXl3bHdpaGJkZ25jaWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNDU3OTQsImV4cCI6MjA3MzYyMTc5NH0.0agkUvqX2EFL2zYbOW8crEwtmHd_WzZvuf-jzb2VkW8' // SUA CHAVE ANON
-);
+ );
 
-// Funções de mensagens
+// Funções de mensagens (sem alterações)
 const showMessage = (element, message) => {
   element.textContent = message;
   element.style.display = 'block';
@@ -19,39 +21,40 @@ const hideMessages = () => {
   statusMessageEl.style.display = 'none';
 };
 
-// 1) Pega o token da URL e cria a sessão
+// 1) Pega o token da URL e cria a sessão (CÓDIGO CORRIGIDO)
 (async () => {
-  const params = new URLSearchParams(window.location.search);
+  // Extrai os parâmetros do HASH (#) da URL, não da query string (?)
+  // Ex: #access_token=...&type=recovery
+  const hashFragment = window.location.hash.substring(1); // Remove o '#' inicial
+  const params = new URLSearchParams(hashFragment);
+  
   const accessToken = params.get("access_token");
-  const type = params.get("token");
+  const type = params.get("type"); // O parâmetro é 'type', não 'token'
 
   if (accessToken && type === "recovery") {
-    const { data, error } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: "" // refresh_token não vem no link de recuperação
-    });
-
-    if (error) {
-      hideMessages();
-      showMessage(errorMessageEl, "Link de recuperação inválido ou expirado.");
-      console.error(error.message);
-    }
+    // O evento 'PASSWORD_RECOVERY' será disparado automaticamente pelo Supabase
+    // ao detectar os parâmetros de recuperação na URL. Não é necessário setSession manualmente.
+    // O listener onAuthStateChange cuidará de mostrar o formulário.
+    showMessage(statusMessageEl, "Verificando link de recuperação...");
   } else {
     hideMessages();
-    showMessage(errorMessageEl, "Link inválido.");
+    showMessage(errorMessageEl, "Link de recuperação inválido ou ausente.");
+    resetPasswordForm.style.display = 'none'; // Garante que o form não apareça
   }
 })();
 
-// 2) Ouve o evento de recuperação
+// 2) Ouve o evento de recuperação de senha
 supabase.auth.onAuthStateChange(async (event, session) => {
+  // Este evento é o ponto central da lógica. Ele é disparado quando o Supabase
+  // detecta os tokens de recuperação na URL (do passo 1).
   if (event === "PASSWORD_RECOVERY") {
     hideMessages();
-    showMessage(statusMessageEl, "Sessão de recuperação válida. Defina sua nova senha.");
+    showMessage(statusMessageEl, "Sessão de recuperação válida. Por favor, defina sua nova senha.");
     resetPasswordForm.style.display = 'block';
   }
 });
 
-// 3) Envia nova senha
+// 3) Envia a nova senha (sem alterações, mas com uma pequena melhoria)
 resetPasswordForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   hideMessages();
@@ -68,18 +71,26 @@ resetPasswordForm.addEventListener('submit', async (e) => {
     return;
   }
 
+  // Desabilitar o botão para evitar múltiplos envios
+  const submitButton = resetPasswordForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  submitButton.textContent = 'Atualizando...';
+
   try {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw error;
 
     resetPasswordForm.style.display = 'none';
-    showMessage(successMessageEl, 'Senha atualizada com sucesso! Redirecionando para o login...');
+    showMessage(successMessageEl, 'Senha atualizada com sucesso! Redirecionando para a página de login...');
 
     setTimeout(() => {
-      window.location.href = '/login.html'; // ajuste conforme seu projeto
+      window.location.href = '/login.html'; // Ajuste o caminho se necessário
     }, 3000);
 
   } catch (error) {
     showMessage(errorMessageEl, `Erro ao atualizar a senha: ${error.message}`);
+    // Reabilitar o botão em caso de erro
+    submitButton.disabled = false;
+    submitButton.textContent = 'Definir Nova Senha';
   }
-})
+});
