@@ -21,7 +21,7 @@ const hideMessages = () => {
   statusMessageEl.style.display = 'none';
 };
 
-// 1. Verifica a URL e mostra o formulário
+// 1. LÓGICA CORRIGIDA: Verifica a URL e mostra o formulário DIRETAMENTE.
 (() => {
   const params = new URLSearchParams(window.location.search);
   const accessToken = params.get("access_token");
@@ -29,17 +29,19 @@ const hideMessages = () => {
 
   // Se o access_token existe e o tipo é 'recovery', o usuário está pronto para redefinir.
   if (accessToken && tokenType === "recovery") {
+    // Não esperamos por nenhum evento. Mostramos o formulário imediatamente.
     hideMessages();
     showMessage(statusMessageEl, "Link válido. Por favor, defina sua nova senha.");
     resetPasswordForm.style.display = 'block';
   } else {
+    // Se os parâmetros não estiverem na URL, o link é inválido.
     hideMessages();
     showMessage(errorMessageEl, "Link de recuperação inválido, expirado ou já utilizado.");
     resetPasswordForm.style.display = 'none';
   }
 })();
 
-// 2. Listener do formulário para ATUALIZAR a senha
+// 2. Listener do formulário para ATUALIZAR a senha (sem alterações, já estava correto)
 resetPasswordForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   hideMessages();
@@ -56,14 +58,13 @@ resetPasswordForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Desabilitar o botão para evitar múltiplos envios
   const submitButton = resetPasswordForm.querySelector('button[type="submit"]');
   submitButton.disabled = true;
   submitButton.textContent = 'Atualizando...';
 
   try {
-    // O access_token da URL já autenticou o cliente Supabase temporariamente.
-    // A chamada updateUser funcionará diretamente.
+    // A biblioteca supabase-js já usou o access_token da URL para se autenticar.
+    // Esta chamada vai funcionar diretamente.
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw error;
 
@@ -71,13 +72,11 @@ resetPasswordForm.addEventListener('submit', async (e) => {
     showMessage(successMessageEl, 'Senha atualizada com sucesso! Redirecionando para a página de login...');
 
     setTimeout(() => {
-      // Redirecione para sua página de login
-      window.location.href = '/login.html'; 
+      window.location.href = '/login.html'; // Ajuste se necessário
     }, 3000);
 
   } catch (error) {
     showMessage(errorMessageEl, `Erro ao atualizar a senha: ${error.message}`);
-    // Reabilitar o botão em caso de erro
     submitButton.disabled = false;
     submitButton.textContent = 'Definir Nova Senha';
   }
