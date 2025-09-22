@@ -6,7 +6,7 @@ const successMessageEl = document.getElementById('successMessage');
 
 // Inicialização do Supabase
 const supabaseUrl = 'https://xyelsqywlwihbdgncilk.supabase.co';
-const supabaseKey = 'SUA_ANON_KEY_AQUI';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWxzcXl3bHdpaGJkZ25jaWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNDU3OTQsImV4cCI6MjA3MzYyMTc5NH0.0agkUvqX2EFL2zYbOW8crEwtmHd_WzZvuf-jzb2VkW8';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // Variável do token de recuperação
