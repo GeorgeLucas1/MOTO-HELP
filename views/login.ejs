@@ -8,14 +8,13 @@
 </head>
 <body>
     <!-- Header -->
-
-   <header class="header">
-    <div class="container">
-        <div class="logo">
-            <img src="/assets/logo.png" alt="Moto Help" class="logo-img">
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <img src="/assets/logo.png" alt="Moto Help" class="logo-img">
+            </div>
         </div>
-    </div>
-</header>
+    </header>
 
     <!-- Main Content -->
     <main class="main">
@@ -29,50 +28,33 @@
                 </p>
             </section>
                 
-
             <!-- Login Section -->
             <section class="login-section">
                 <div class="login-card">
                     <h3 class="login-title">LOGIN</h3>
                     
+                    <!-- Formulário de Login -->
                     <form class="login-form" id="loginForm">
                         <div class="form-group">
                             <label for="email" class="form-label">E-mail</label>
-                            <input 
-                                type="email" 
-                                id="email" 
-                                class="form-input" 
-                                placeholder="Digite seu email"
-                                required
-                            >
+                            <input type="email" id="email" class="form-input" placeholder="Digite seu email" required>
                         </div>
-
                         <div class="form-group">
                             <label for="senha" class="form-label">Senha</label>
-                            <input 
-                                type="password" 
-                                id="senha" 
-                                class="form-input" 
-                                placeholder="Digite sua senha"
-                                required
-                            >
+                            <input type="password" id="senha" class="form-input" placeholder="Digite sua senha" required>
                         </div>
-    <a href="#" id="forgotPasswordLink" class="forgot-password-link">Esqueceu a senha?</a>
-                        <button type="submit" class="btn btn-primary btn-full">
-                            Entrar
-                            </button>
-    
-
+                        <button type="submit" class="btn btn-primary btn-full">Entrar</button>
                     </form>
 
-                  
+                    <!-- Link de Recuperação de Senha (posicionado fora do formulário) -->
 
-                    <!-- Register Button -->
-                    <button type="button" class="btn btn-primary btn-full" id="openRegisterModal">
-                        Cadastrar
-                    </button>
+                    <!-- Botão de Ação Secundário -->
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn-secondary btn-full" id="openRegisterModal">
+                            Cadastrar
+                        </button>
+                    </div>
                 </div>
-                
             </section>
         </div>
     </main>
@@ -81,15 +63,9 @@
     <footer class="footer">
         <div class="container">
             <div class="footer-logos">
-                <div class="footer-logo footer-logo-black">
-                    <span>LOGO 1</span>
-                </div>
-                <div class="footer-logo footer-logo-yellow">
-                    <span>LOGO 2</span>
-                </div>
-                <div class="footer-logo footer-logo-white">
-                    <span>LOGO 3</span>
-                </div>
+                <div class="footer-logo footer-logo-black"><img src="/assets/parceiro1.png" alt="Logo Parceiro 1"></div>
+                <div class="footer-logo footer-logo-yellow"><img src="/assets/icons8-google.svg" alt="Logo Google"></div>
+                <div class="footer-logo footer-logo-white"><img src="/assets/parceiro1.png" alt="Logo Parceiro 3"></div>
             </div>
         </div>
     </footer>
@@ -102,9 +78,7 @@
                 <p class="modal-subtitle">Crie sua conta para acessar todos os serviços</p>
                 <button class="modal-close" id="closeModal">&times;</button>
             </div>
-
             <div class="modal-body">
-                <!-- Profile Photo Section -->
                 <div class="profile-photo-section">
                     <div class="profile-photo-placeholder">
                         <svg class="camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -114,68 +88,32 @@
                     </div>
                     <label class="profile-photo-label">Foto de perfil</label>
                 </div>
-
-                <!-- Form Fields -->
                 <form class="register-form" id="registerForm">
                     <div class="form-group">
                         <label for="regNome" class="form-label">Nome Completo</label>
-                        <input 
-                            type="text" 
-                            id="regNome" 
-                            class="form-input" 
-                            placeholder="Digite seu nome completo"
-                            required
-                        >
+                        <input type="text" id="regNome" class="form-input" placeholder="Digite seu nome completo" required>
                     </div>
-
                     <div class="form-group">
                         <label for="regEmail" class="form-label">Email</label>
-                        <input 
-                            type="email" 
-                            id="regEmail" 
-                            class="form-input" 
-                            placeholder="Digite seu email  "
-                            required
-                        >
+                        <input type="email" id="regEmail" class="form-input" placeholder="Digite seu email" required>
                     </div>
-
                     <div class="form-group">
                         <label for="regSenha" class="form-label">Senha</label>
-                        <input 
-                            type="password" 
-                            id="regSenha" 
-                            class="form-input" 
-                            placeholder="Digite sua senha"
-                            required
-                        >
+                        <input type="password" id="regSenha" class="form-input" placeholder="Digite sua senha" required>
                     </div>
-
                     <div class="form-group">
                         <label for="regConfirmarSenha" class="form-label">Confirmar Senha</label>
-                        <input 
-                            type="password" 
-                            id="regConfirmarSenha" 
-                            class="form-input" 
-                            placeholder="Confirme sua senha"
-                            required
-                        >
+                        <input type="password" id="regConfirmarSenha" class="form-input" placeholder="Confirme sua senha" required>
                     </div>
-
-                    <button type="submit" class="btn btn-primary btn-full">
-                        REALIZAR CADASTRO
-                    </button>
-
-                    <button type="button" class="btn btn-outline btn-full" id="cancelRegister">
-                        Cancelar
-                    </button>
+                    <button type="submit" class="btn btn-primary btn-full">REALIZAR CADASTRO</button>
+                    <button type="button" class="btn btn-outline btn-full" id="cancelRegister">Cancelar</button>
                 </form>
             </div>
         </div>
     </div>
 
+    <!-- Carregamento dos Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-   
     <script src="/login/script.js"></script>
 </body>
 </html>

@@ -11,36 +11,6 @@ body {
     background-color: #f5f5f5;
 }
 
-#googleLoginButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 10px 20px;
-    background-color: #4285F4;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
-}
-
-#googleLoginButton img {
-    width: 20px;
-    height: 20px;
-}
-
-#googleLoginButton:hover {
-    background-color: #357ae8;
-    transform: translateY(-2px);
-}
-
-#googleLoginButton:active {
-    transform: translateY(0);
-}
-
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -242,31 +212,29 @@ body {
 
 /* Logos com animação infinita */
 .footer-logo {
-    width: 5rem;
-    height: 3rem;
-    border-radius: 4px;
+    height: 2.5rem; /* Altura padronizada para todos os contêineres de logo */
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
-    font-weight: bold;
     position: relative;
     animation: slideLoop 8s linear infinite;
+    background-color: transparent;
+    margin: 0 1.5rem; /* Espaçamento entre os logos */
 }
 
-.footer-logo-black {
-    background-color: black;
-    color: white;
+/* As imagens dentro dos logos */
+.footer-logo img {
+    height: 100%; /* A imagem ocupa toda a altura do contêiner */
+    width: auto;   /* Largura se ajusta para manter a proporção */
+    object-fit: contain; /* Garante que a imagem inteira seja visível sem distorção */
 }
 
-.footer-logo-yellow {
-    background-color: #ffd700;
-    color: black;
-}
-
+/* Removemos os fundos e cores, já que agora temos imagens */
+.footer-logo-black,
+.footer-logo-yellow,
 .footer-logo-white {
-    background-color: white;
-    color: black;
+    background-color: transparent;
+    color: inherit;
 }
 
 @keyframes slideLoop {

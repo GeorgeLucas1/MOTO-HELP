@@ -13,6 +13,10 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Rota estática explícita para os assets de login
+app.use('/login', express.static(path.join(__dirname, 'public/login')));
+
+// Rota estática geral para outros assets (como imagens em /assets)
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {

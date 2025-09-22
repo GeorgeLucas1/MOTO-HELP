@@ -3,16 +3,13 @@ const router = express.Router();
 
 const authController = require('../controllers/authController');
 
-router.get('/login', (req, res) => {
-    res.render('login'); 
-});
+// A rota GET /login foi removida para evitar redundância.
+// A rota principal '/' em index.js já renderiza a página de login.
 
-router.get('/reset-password', (req, res) => {
-    res.render('reset-password');
-});
-
+// As rotas de autenticação agora estão prefixadas com /auth
 router.post('/auth/login', authController.login);
 router.post('/auth/register', authController.register);
-router.post('/auth/reset-password', authController.resetPassword);
+
+// A rota de reset de senha foi removida porque a funcionalidade não existe mais.
 
 module.exports = router;
