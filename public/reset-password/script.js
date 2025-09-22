@@ -6,12 +6,11 @@ const successMessageEl = document.getElementById('successMessage');
 
 // Inicialização do Supabase
 const supabaseUrl = 'https://xyelsqywlwihbdgncilk.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWxzcXl3bHdpaGJkZ25jaWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNDU3OTQsImV4cCI6MjA3MzYyMTc5NH0.0agkUvqX2EFL2zYbOW8crEwtmHd_WzZvuf-jzb2VkW8';
+const supabaseKey = 'SUA_ANON_KEY_AQUI';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// Variáveis
+// Variável do token de recuperação
 let recoveryToken = null;
-let refreshToken = null;
 
 // Funções de mensagens
 const showMessage = (el, msg, type = 'info') => {
@@ -27,40 +26,25 @@ const hideMessages = () => {
   });
 };
 
-// Extrai token da URL
-const getUrlParams = () => {
-  const params = new URLSearchParams(window.location.search);
+// Extrai token da URL (hash #access_token)
+const getRecoveryTokenFromUrl = () => {
   const hash = window.location.hash;
+  if (!hash) return null;
 
-  if (hash && hash.includes('access_token')) {
-    const hashParams = new URLSearchParams(hash.substring(1));
-    return {
-      access_token: hashParams.get('access_token'),
-      refresh_token: hashParams.get('refresh_token'),
-      token_type: hashParams.get('type') || hashParams.get('token_type'),
-    };
-  }
+  const params = new URLSearchParams(hash.substring(1));
+  if (params.get('type') !== 'recovery') return null;
 
-  return {
-    access_token: params.get('access_token'),
-    refresh_token: params.get('refresh_token'),
-    token_type: params.get('type') || params.get('token_type'),
-  };
+  return params.get('access_token');
 };
 
 // Valida token e exibe formulário
 (async () => {
-  const urlParams = getUrlParams();
-  console.log('URL Params:', urlParams);
+  recoveryToken = getRecoveryTokenFromUrl();
 
-  recoveryToken = urlParams.access_token;
-  refreshToken = urlParams.refresh_token;
-  const tokenType = urlParams.token_type;
-
-  if (!recoveryToken || tokenType !== 'recovery') {
+  if (!recoveryToken) {
     hideMessages();
     showMessage(errorMessageEl, 'Link de recuperação inválido, expirado ou já utilizado.', 'error');
-    resetPasswordForm.style.display = 'none';
+    if (resetPasswordForm) resetPasswordForm.style.display = 'none';
     return;
   }
 
@@ -71,54 +55,50 @@ const getUrlParams = () => {
 })();
 
 // Listener do formulário para atualizar senha
-resetPasswordForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  hideMessages();
+if (resetPasswordForm) {
+  resetPasswordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideMessages();
 
-  const newPassword = document.getElementById('newPassword').value;
-  const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
 
-  // Validações básicas
-  if (newPassword.length < 6) {
-    showMessage(errorMessageEl, 'A senha deve ter pelo menos 6 caracteres.', 'error');
-    return;
-  }
+    // Validações básicas
+    if (newPassword.length < 6) {
+      showMessage(errorMessageEl, 'A senha deve ter pelo menos 6 caracteres.', 'error');
+      return;
+    }
 
-  if (newPassword !== confirmNewPassword) {
-    showMessage(errorMessageEl, 'As senhas não coincidem.', 'error');
-    return;
-  }
+    if (newPassword !== confirmNewPassword) {
+      showMessage(errorMessageEl, 'As senhas não coincidem.', 'error');
+      return;
+    }
 
-  const submitButton = resetPasswordForm.querySelector('button[type="submit"]');
-  const originalText = submitButton.textContent;
-  submitButton.disabled = true;
-  submitButton.textContent = 'Atualizando...';
+    const submitButton = resetPasswordForm.querySelector('button[type="submit"]');
+    const originalText = submitButton.textContent;
+    submitButton.disabled = true;
+    submitButton.textContent = 'Atualizando...';
 
-  try {
-    // 1. Cria sessão temporária com o token de recuperação
-    const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-      access_token: recoveryToken,
-      refresh_token: refreshToken || recoveryToken, // fallback caso não venha refresh_token
-    });
+    try {
+      // Atualiza a senha diretamente com o recovery token
+      const { data, error } = await supabase.auth.api.updateUser(recoveryToken, {
+        password: newPassword
+      });
 
-    if (sessionError) throw sessionError;
+      if (error) throw error;
 
-    // 2. Atualiza a senha
-    const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+      resetPasswordForm.style.display = 'none';
+      showMessage(successMessageEl, 'Senha atualizada com sucesso! Redirecionando para login...', 'success');
 
-    if (error) throw error;
+      setTimeout(() => {
+        window.location.href = '../login/index.html';
+      }, 3000);
 
-    resetPasswordForm.style.display = 'none';
-    showMessage(successMessageEl, 'Senha atualizada com sucesso! Redirecionando para login...', 'success');
-
-    setTimeout(() => {
-      window.location.href = '../login/index.html';
-    }, 3000);
-
-  } catch (err) {
-    console.error('Erro ao atualizar senha:', err);
-    showMessage(errorMessageEl, `Erro ao atualizar a senha: ${err.message}`, 'error');
-    submitButton.disabled = false;
-    submitButton.textContent = originalText;
-  }
-});
+    } catch (err) {
+      console.error('Erro ao atualizar senha:', err);
+      showMessage(errorMessageEl, `Erro ao atualizar a senha: ${err.message}`, 'error');
+      submitButton.disabled = false;
+      submitButton.textContent = originalText;
+    }
+  });
+}
