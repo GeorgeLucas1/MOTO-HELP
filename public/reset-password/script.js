@@ -9,9 +9,6 @@ const supabaseUrl = 'https://xyelsqywlwihbdgncilk.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWxzcXl3bHdpaGJkZ25jaWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNDU3OTQsImV4cCI6MjA3MzYyMTc5NH0.0agkUvqX2EFL2zYbOW8crEwtmHd_WzZvuf-jzb2VkW8';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// Variável do token de recuperação
-let recoveryToken = null;
-
 // Funções de mensagens
 const showMessage = (el, msg, type = 'info') => {
   if (!el) return;
@@ -26,8 +23,8 @@ const hideMessages = () => {
   });
 };
 
-// Extrai token da URL (hash #access_token)
-const getRecoveryTokenFromUrl = () => {
+// Função para extrair o token de recuperação do hash da URL
+const getRecoveryToken = () => {
   const hash = window.location.hash;
   if (!hash) return null;
 
@@ -37,9 +34,9 @@ const getRecoveryTokenFromUrl = () => {
   return params.get('access_token');
 };
 
-// Valida token e exibe formulário
+// Inicialização: valida o token e exibe o formulário
 (async () => {
-  recoveryToken = getRecoveryTokenFromUrl();
+  const recoveryToken = getRecoveryToken();
 
   if (!recoveryToken) {
     hideMessages();
@@ -52,10 +49,8 @@ const getRecoveryTokenFromUrl = () => {
   resetPasswordForm.style.display = 'block';
   hideMessages();
   showMessage(statusMessageEl, 'Link válido. Por favor, defina sua nova senha.', 'success');
-})();
 
-// Listener do formulário para atualizar senha
-if (resetPasswordForm) {
+  // Listener do formulário para atualizar senha
   resetPasswordForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideMessages();
@@ -80,12 +75,14 @@ if (resetPasswordForm) {
     submitButton.textContent = 'Atualizando...';
 
     try {
-      // Atualiza a senha diretamente com o recovery token
+      // Atualiza a senha usando o recovery token
       const { data, error } = await supabase.auth.api.updateUser(recoveryToken, {
         password: newPassword
       });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       resetPasswordForm.style.display = 'none';
       showMessage(successMessageEl, 'Senha atualizada com sucesso! Redirecionando para login...', 'success');
@@ -96,9 +93,16 @@ if (resetPasswordForm) {
 
     } catch (err) {
       console.error('Erro ao atualizar senha:', err);
-      showMessage(errorMessageEl, `Erro ao atualizar a senha: ${err.message}`, 'error');
+
+      // Mensagem de erro genérica para token inválido ou expirado
+      if (err.message.includes('JWT') || err.message.includes('token')) {
+        showMessage(errorMessageEl, 'Link inválido, expirado ou já utilizado.', 'error');
+      } else {
+        showMessage(errorMessageEl, `Erro ao atualizar a senha: ${err.message}`, 'error');
+      }
+
       submitButton.disabled = false;
       submitButton.textContent = originalText;
     }
   });
-}
+})();
