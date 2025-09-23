@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MotoHelp</title>
     <link rel="stylesheet" href="/login/styles.css">
+    <link rel="shortcut icon" href="../public/assets/logo.png">
 </head>
 <body>
     <!-- Header -->
@@ -46,8 +47,6 @@
                         <button type="submit" class="btn btn-primary btn-full">Entrar</button>
                     </form>
 
-                    <!-- Link de Recuperação de Senha (posicionado fora do formulário) -->
-
                     <!-- Botão de Ação Secundário -->
                     <div class="action-buttons">
                         <button type="button" class="btn btn-secondary btn-full" id="openRegisterModal">
@@ -59,16 +58,23 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-logos">
-                <div class="footer-logo footer-logo-black"><img src="/assets/parceiro1.png" alt="Logo Parceiro 1"></div>
-                <div class="footer-logo footer-logo-yellow"><img src="/assets/icons8-google.svg" alt="Logo Google"></div>
-                <div class="footer-logo footer-logo-white"><img src="/assets/parceiro1.png" alt="Logo Parceiro 3"></div>
-            </div>
+<!-- Footer --> 
+<footer class="footer">
+    <div class="container">
+      <div class="footer-logos">
+        <div class="footer-logo footer-logo-black">
+          <img src="../assets/parceiro1.png" alt="Logo 1">
         </div>
-    </footer>
+        <div class="footer-logo footer-logo-yellow">
+          <img src="../assets/parceiro1.png" alt="Logo 2">
+        </div>
+        <div class="footer-logo footer-logo-white">
+          <img src="../assets/parceiro1.png" alt="Logo 3">
+        </div>
+      </div>
+    </div>
+  </footer>
+
 
     <!-- Register Modal -->
     <div class="modal-overlay" id="modalOverlay">
@@ -107,6 +113,54 @@
                     </div>
                     <button type="submit" class="btn btn-primary btn-full">REALIZAR CADASTRO</button>
                     <button type="button" class="btn btn-outline btn-full" id="cancelRegister">Cancelar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ícone Flutuante de Suporte -->
+    <div class="support-float" id="supportFloat">
+        <svg class="support-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+    </div>
+
+    <!-- Modal de Suporte -->
+    <div class="modal-overlay" id="supportModalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">SUPORTE TÉCNICO</h3>
+                <p class="modal-subtitle">Como podemos ajudá-lo?</p>
+                <button class="modal-close" id="closeSupportModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form class="support-form" id="supportForm">
+                    <div class="form-group">
+                        <label for="supportName" class="form-label">Nome</label>
+                        <input type="text" id="supportName" class="form-input" placeholder="Digite seu nome" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="supportEmail" class="form-label">E-mail</label>
+                        <input type="email" id="supportEmail" class="form-input" placeholder="Digite seu e-mail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="supportType" class="form-label">Tipo de Problema</label>
+                        <select id="supportType" class="form-input" required>
+                            <option value="">Selecione o tipo de problema</option>
+                            <option value="redefinir_senha">Redefinir Senha</option>
+                            <option value="problemas_login">Problemas de Login</option>
+                            <option value="erro_cadastro">Erro no Cadastro</option>
+                            <option value="bug_sistema">Bug no Sistema</option>
+                            <option value="duvida_geral">Dúvida Geral</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="supportMessage" class="form-label">Descrição do Problema</label>
+                        <textarea id="supportMessage" class="form-input" rows="4" placeholder="Descreva seu problema em detalhes" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">ENVIAR SOLICITAÇÃO</button>
+                    <button type="button" class="btn btn-outline btn-full" id="cancelSupport">Cancelar</button>
                 </form>
             </div>
         </div>

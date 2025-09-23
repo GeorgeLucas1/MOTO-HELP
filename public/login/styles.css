@@ -83,7 +83,8 @@ body {
 
 /* Form Styles */
 .login-form,
-.register-form {
+.register-form,
+.support-form {
     margin-bottom: 1.5rem;
 }
 
@@ -107,6 +108,7 @@ body {
     font-size: 1rem;
     transition: border-color 0.2s, box-shadow 0.2s;
     background: white;
+    font-family: inherit;
 }
 
 .form-input:focus {
@@ -117,6 +119,12 @@ body {
 
 .form-input::placeholder {
     color: #a0aec0;
+}
+
+/* Textarea específico */
+textarea.form-input {
+    resize: vertical;
+    min-height: 100px;
 }
 
 /* Button Styles */
@@ -364,6 +372,70 @@ body {
     margin-bottom: 1rem;
 }
 
+/* Support Float Button */
+.support-float {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    background-color: #e53e3e;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+    transition: all 0.3s ease;
+    z-index: 999;
+}
+
+.support-float:hover {
+    background-color: #c53030;
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(229, 62, 62, 0.4);
+}
+
+.support-icon {
+    width: 28px;
+    height: 28px;
+    color: white;
+    stroke-width: 2.5;
+}
+
+/* Support Modal específico */
+#supportModalOverlay .modal {
+    max-width: 600px;
+}
+
+#supportModalOverlay .modal-header {
+    background-color: #e53e3e;
+}
+
+#supportModalOverlay .modal-title {
+    color: white;
+}
+
+#supportModalOverlay .modal-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Animação de entrada do float */
+@keyframes floatIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.support-float {
+    animation: floatIn 0.5s ease-out;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
@@ -394,6 +466,19 @@ body {
     .modal-body {
         padding: 1rem;
     }
+
+    /* Support float responsivo */
+    .support-float {
+        bottom: 1.5rem;
+        right: 1.5rem;
+        width: 50px;
+        height: 50px;
+    }
+
+    .support-icon {
+        width: 24px;
+        height: 24px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -404,4 +489,17 @@ body {
     .login-section {
         padding: 0 1rem;
     }
+
+    .support-float {
+        bottom: 1rem;
+        right: 1rem;
+        width: 45px;
+        height: 45px;
+    }
+
+    .support-icon {
+        width: 20px;
+        height: 20px;
+    }
 }
+
