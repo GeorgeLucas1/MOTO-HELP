@@ -194,7 +194,7 @@ try {
           hideModal();
           loginForm.reset();
           // Redirecionar ou atualizar UI conforme necessário
-          // window.location.href = '../home/index.html';
+           window.location.href = '../home/index.html';
         }, 1000);
       }
     } catch (error) {
