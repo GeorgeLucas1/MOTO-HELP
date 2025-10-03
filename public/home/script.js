@@ -11,7 +11,7 @@
 // --- 1. INICIALIZAÇÃO DO SUPABASE ---
 const SUPABASE_URL = 'https://oeuabuswavmlwquaujji.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ldWFidXN3YXZtbHdxdWF1amppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NDUyNjEsImV4cCI6MjA3NTAyMTI2MX0.jc0o-FLPNYLak1kU3b_1r8jns0yuGZnJ8W2Mlz36t9Y';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY  );
 
 // ===== ESTADO GLOBAL DA APLICAÇÃO =====
 let currentUser = null;
@@ -61,21 +61,44 @@ class AuthManager {
     }
     async checkUserSession() {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session) await this.handleUserSignIn(session);
+        if (session) await this.handleUserSignIn(session, false); // Não mostrar saudação no carregamento inicial
         else this.handleUserSignOut();
-        // A função loadPublicAnuncios() foi movida para a classe PublicAnunciosManager
-        // e será chamada na inicialização.
     }
-    async handleUserSignIn(session) {
+    async handleUserSignIn(session, showGreeting = true) {
         currentUser = session.user;
         await this.fetchUserProfile();
         this.updateUI();
+
+        // --- INÍCIO DO CÓDIGO DE SAUDAÇÃO ---
+        if (showGreeting) {
+            // 1. Obter o nome de exibição do usuário.
+            const displayName = currentUser?.user_metadata?.display_name || userProfile?.company_name || currentUser?.email?.split('@')[0] || 'Usuário';
+
+            // 2. Obter a hora atual.
+            const horaAtual = new Date().getHours();
+
+            // 3. Determinar a saudação correta.
+            let saudacao;
+            if (horaAtual >= 5 && horaAtual < 12) {
+                saudacao = 'Bom dia';
+            } else if (horaAtual >= 12 && horaAtual < 18) {
+                saudacao = 'Boa tarde';
+            } else {
+                saudacao = 'Boa noite';
+            }
+
+            // 4. Exibir o alerta personalizado.
+            // Usamos um setTimeout para garantir que a UI principal seja renderizada antes do alerta bloquear a tela.
+            setTimeout(() => {
+                alert(`${saudacao}, ${displayName}! Bem-vindo(a) de volta.`);
+            }, 100);
+        }
+        // --- FIM DO CÓDIGO DE SAUDAÇÃO ---
     }
     handleUserSignOut() {
         currentUser = null;
         userProfile = null;
         this.updateUI();
-        // Redireciona para a página inicial ou de login para uma experiência de usuário mais clara
         window.location.reload();
     }
     async fetchUserProfile() {
@@ -124,7 +147,6 @@ class AuthManager {
                 toastManager.show('Erro ao fazer logout.', 'error');
             } else {
                 toastManager.show('Você saiu com sucesso!', 'success');
-                // A lógica de handleUserSignOut já trata a atualização da UI e recarregamento.
             }
         }
     }
@@ -148,9 +170,14 @@ class UserDropdownManager {
     }
     updateUserInfo(profile) {
         if (!profile) return;
+        // Atualizado para usar a mesma lógica da saudação para consistência
         const displayName = currentUser?.user_metadata?.display_name || profile.company_name || profile.email?.split('@')[0] || 'Usuário';
         document.getElementById('userName').textContent = displayName;
-        document.getElementById('userEmail').textContent = profile.email || 'email@exemplo.com';
+        // O elemento com id 'userEmail' não existe no seu HTML, adicionei um fallback para evitar erros.
+        const userEmailElement = document.getElementById('userEmail');
+        if (userEmailElement) {
+            userEmailElement.textContent = profile.email || 'email@exemplo.com';
+        }
     }
 }
 
@@ -213,7 +240,6 @@ class FormManager {
     init() {
         document.getElementById('formCadastro')?.addEventListener('submit', (e) => this.handlePartnerFormSubmit(e));
         document.getElementById('formEditar')?.addEventListener('submit', (e) => this.handleEditFormSubmit(e));
-        // A lógica do formAnuncio foi movida para a classe AnunciosManager
         this.setupConditionalField('formCadastro', 'is_empresa', 'empresaFieldContainer');
         this.setupConditionalField('formEditar', 'is_empresa', 'edit_empresaFieldContainer');
         this.setupInputMasks();
@@ -321,17 +347,13 @@ class FormManager {
 // ===== GERENCIADOR DE ANÚNCIOS PÚBLICOS (PLACEHOLDER) =====
 class PublicAnunciosManager {
     constructor() {
-        // Esta classe pode ser expandida para carregar anúncios públicos
-        // que não pertencem a nenhum parceiro específico.
         this.loadPublicAnuncios();
     }
     async loadPublicAnuncios() {
-        // Lógica para carregar anúncios públicos, se houver.
-        // Por enquanto, vamos deixar um placeholder.
         console.log("Carregando anúncios públicos...");
         const container = document.getElementById('publicListings');
         if (container) {
-            // container.innerHTML = '<p>Anúncios públicos aparecerão aqui.</p>';
+            // Lógica futura para carregar anúncios aqui
         }
     }
 }
@@ -339,23 +361,19 @@ class PublicAnunciosManager {
 // ===== GERENCIADOR DE ANÚNCIOS DE PARCEIROS (PLACEHOLDER) =====
 class AnunciosManager {
     constructor() {
-        // Inicializa os listeners para os formulários de anúncio
         document.getElementById('formAnuncio')?.addEventListener('submit', (e) => this.handleAnuncioSubmit(e));
     }
     
     openAnuncioModal() {
-        // Lógica para abrir o modal de criação de anúncio
         modalManager.openModal('modalAnuncio');
     }
 
     loadAnuncios() {
-        // Lógica para carregar os anúncios do usuário logado
         console.log("Carregando anúncios do parceiro...");
     }
 
     handleAnuncioSubmit(event) {
         event.preventDefault();
-        // Lógica para criar ou atualizar um anúncio
         console.log("Formulário de anúncio enviado.");
         toastManager.show("Funcionalidade de anúncio em desenvolvimento.", "info");
     }
@@ -372,7 +390,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     
-    // Instancia todos os gerenciadores
     toastManager = new ToastManager();
     authManager = new AuthManager();
     modalManager = new ModalManager();
@@ -381,23 +398,14 @@ document.addEventListener('DOMContentLoaded', () => {
     publicAnunciosManager = new PublicAnunciosManager();
     anunciosManager = new AnunciosManager();
 
-    // Adiciona listener para exclusão de conta (com aviso)
     document.getElementById('excluirContaLink')?.addEventListener('click', () => {
         alert("A exclusão de conta deve ser implementada com uma Supabase Edge Function por segurança para garantir que todos os dados do usuário sejam removidos.");
     });
 
-    // =======================================================================
-    // === CORREÇÃO APLICADA: DELEGAÇÃO DE EVENTO PARA O BOTÃO DE LOGOUT ===
-    // =======================================================================
-    // Esta abordagem garante que o clique seja capturado mesmo que o botão
-    // não esteja visível quando a página carrega.
     document.addEventListener('click', function(event) {
-        // Verifica se o elemento clicado (ou um de seus pais) é o botão de logout
         const logoutButton = event.target.closest('#logoutButton');
-
         if (logoutButton) {
-            event.preventDefault(); // Previne qualquer ação padrão do link/botão
-            
+            event.preventDefault();
             if (authManager) {
                 authManager.logout();
             } else {
