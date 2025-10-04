@@ -351,8 +351,8 @@
                     
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-user-plus"></i>
-                            Cadastrar
+                            <i class="fas fa-check"></i>
+                            Tornar-se Parceiro
                         </button>
                     </div>
                 </form>
@@ -371,56 +371,20 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="anuncios-header">
-                    <div class="anuncios-stats">
-                        <div class="stat-card">
-                            <div class="stat-number" id="totalAnuncios">0</div>
-                            <div class="stat-label">Total de Anúncios</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="anunciosAtivos">0</div>
-                            <div class="stat-label">Anúncios Ativos</div>
-                        </div>
-                    </div>
+                <div class="anuncios-actions">
                     <button class="btn btn-primary" id="btnNovoAnuncio">
                         <i class="fas fa-plus"></i>
                         Novo Anúncio
                     </button>
                 </div>
-                
-                <div class="anuncios-filters">
-                    <div class="filter-group">
-                        <label for="statusFilter">Status:</label>
-                        <select id="statusFilter" class="form-select">
-                            <option value="">Todos</option>
-                            <option value="ativo">Ativo</option>
-                            <option value="inativo">Inativo</option>
-                        </select>
-                    </div>
-                    <div class="search-anuncios">
-                        <input type="text" id="searchAnuncios" placeholder="Buscar anúncios..." class="form-input">
-                    </div>
-                </div>
-                
-                <div class="anuncios-list" id="anunciosList">
+                <div id="anunciosListContainer" class="anuncios-list">
                     <!-- Lista de anúncios será carregada aqui -->
-                    <div class="empty-anuncios" id="emptyAnuncios">
-                        <div class="empty-icon">
-                            <i class="fas fa-bullhorn"></i>
-                        </div>
-                        <h4>Nenhum anúncio encontrado</h4>
-                        <p>Crie seu primeiro anúncio para começar a divulgar seus serviços</p>
-                        <button class="btn btn-primary" id="btnPrimeiroAnuncio">
-                            <i class="fas fa-plus"></i>
-                            Criar Primeiro Anúncio
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Criação/Edição de Anúncio -->
+    <!-- Modal de Cadastro/Edição de Anúncio -->
     <div id="modalAnuncio" class="modal">
         <div class="modal-overlay" data-close-modal></div>
         <div class="modal-content modal-form">
@@ -432,83 +396,78 @@
             </div>
             <div class="modal-body">
                 <form id="formAnuncio" class="form" novalidate>
-                    <input type="hidden" id="anuncioId" name="id">
+                    <input type="hidden" id="anuncio_id" name="anuncio_id">
+                    <input type="hidden" id="anuncio_imagem_data" name="imagem_data">
                     
                     <div class="form-section">
-                        <h3 class="form-section-title">Informações do Anúncio</h3>
-                        
                         <div class="form-group">
-                            <label for="tituloAnuncio" class="form-label">Título do Anúncio *</label>
-                            <input type="text" id="tituloAnuncio" name="titulo" class="form-input" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="descricaoAnuncio" class="form-label">Descrição *</label>
-                            <textarea id="descricaoAnuncio" name="descricao" class="form-textarea" rows="4" required></textarea>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="categoriaAnuncio" class="form-label">Categoria *</label>
-                                <select id="categoriaAnuncio" name="categoria" class="form-select" required>
-                                    <option value="">Selecione uma categoria</option>
-                                    <option value="mecanico">Mecânico</option>
-                                    <option value="oficina">Oficina</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="precoAnuncio" class="form-label">Preço (R$)</label>
-                                <input type="number" id="precoAnuncio" name="preco" class="form-input" step="0.01" min="0">
+                            <label for="anuncio_imagem" class="form-label">Imagem do Anúncio</label>
+                            <div class="image-upload-container">
+                                <div class="image-preview" id="imagePreview">
+                                    <i class="fas fa-image"></i>
+                                    <p>Clique ou arraste uma imagem</p>
+                                </div>
+                                <input type="file" id="anuncio_imagem" name="imagem" class="form-input-file" accept="image/*">
+                                <button type="button" class="btn btn-outline btn-sm" id="btnRemoverImagem" style="display: none;">
+                                    <i class="fas fa-trash"></i>
+                                    Remover Imagem
+                                </button>
                             </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="servicosAnuncio" class="form-label">Serviços Oferecidos</label>
-                            <textarea id="servicosAnuncio" name="servicos" class="form-textarea" rows="3" placeholder="Liste os principais serviços oferecidos"></textarea>
+                            <label for="anuncio_titulo" class="form-label">Título do Anúncio *</label>
+                            <input type="text" id="anuncio_titulo" name="titulo" class="form-input" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="contatoAnuncio" class="form-label">Informações de Contato</label>
-                            <textarea id="contatoAnuncio" name="contato" class="form-textarea" rows="2" placeholder="Telefone, WhatsApp, endereço, etc."></textarea>
+                            <label for="anuncio_descricao" class="form-label">Descrição *</label>
+                            <textarea id="anuncio_descricao" name="descricao" class="form-textarea" rows="4" required></textarea>
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">Status do Anúncio</label>
-                            <div class="radio-group">
-                                <label class="radio-option">
-                                    <input type="radio" name="status" value="ativo" checked>
-                                    <span class="radio-indicator"></span>
-                                    <span class="radio-label">Ativo</span>
-                                </label>
-                                <label class="radio-option">
-                                    <input type="radio" name="status" value="inativo">
-                                    <span class="radio-indicator"></span>
-                                    <span class="radio-label">Inativo</span>
-                                </label>
-                            </div>
+                            <label for="anuncio_categoria" class="form-label">Categoria *</label>
+                            <select id="anuncio_categoria" name="categoria" class="form-select" required>
+                                <option value="">Selecione uma categoria</option>
+                                <option value="mecanico">Mecânico</option>
+                                <option value="oficina">Oficina</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="anuncio_servicos" class="form-label">Serviços Oferecidos</label>
+                            <textarea id="anuncio_servicos" name="servicos" class="form-textarea" rows="3" placeholder="Ex: Troca de óleo, Revisão completa, etc."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="anuncio_preco" class="form-label">Preço (opcional)</label>
+                            <input type="number" id="anuncio_preco" name="preco" class="form-input" step="0.01" placeholder="0.00">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="anuncio_contato" class="form-label">Informações de Contato Adicionais</label>
+                            <textarea id="anuncio_contato" name="contato" class="form-textarea" rows="2" placeholder="Email, site, redes sociais, etc."></textarea>
                         </div>
                     </div>
                     
                     <div class="form-actions">
-                        <button type="button" class="btn btn-outline" data-close-modal>
-                            Cancelar
-                        </button>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i>
                             Salvar Anúncio
+                        </button>
+                        <button type="button" class="btn btn-outline" data-close-modal>
+                            Cancelar
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    <!-- ... seu código existente ... -->
 
     <!-- Contêiner para as notificações (Toasts) -->
     <div id="toast-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../home/script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
