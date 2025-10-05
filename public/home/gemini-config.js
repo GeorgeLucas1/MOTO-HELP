@@ -5,7 +5,7 @@ class GeminiChatBot {
         // ==================================================================
         this.apiKey = 'AIzaSyCiZYODiOpY1uH1SFqTOvSn55WnQo4JpS0'; 
         this.apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-        this.conversationHistory = [];
+        this.conversationHistory = []; // Armazena pares de {role: 'user'/'model', content: 'mensagem'}
         this.isTyping = false;
         this.init();
     }
@@ -18,7 +18,7 @@ class GeminiChatBot {
 
     setupPersonality() {
         this.systemPrompt = `
-Você é o kennedy, um assistente virtual fofo e especializado em motocicletas e serviços automotivos. 
+Você é o motinho, um assistente virtual fofo e especializado em motocicletas e serviços automotivos. 
 Você trabalha para o Moto Help, uma plataforma que conecta motociclistas com oficinas e mecânicos especializados.
 Características da sua personalidade:
 - Sempre muito simpático, prestativo e entusiasmado.
@@ -49,8 +49,8 @@ Características da sua personalidade:
         <div class="chatbot-header">
             <div class="chatbot-avatar"><i class="fas fa-robot"></i></div>
             <div class="chatbot-info">
-                <h3>Kennedy-Chat-bot</h3>
-                <span>Agente com Inteligência Artificial</span>
+                <h3>Motinho-Chat-bot</h3>
+                <span>Agente com Inteligência Artificial desenvolvido para auxiliar na tomada de decisões.</span>
             </div>
             <button class="chatbot-close" id="chatbot-close"><i class="fas fa-times"></i></button>
         </div>
@@ -58,7 +58,7 @@ Características da sua personalidade:
             <div class="message bot-message">
                 <div class="message-avatar"><i class="fas fa-robot"></i></div>
                 <div class="message-content">
-                    <p>Olá! 🏍️ Eu sou o Kennedy, seu assistente virtual do Moto Help! Como posso te ajudar hoje?</p>
+                    <p>Olá! 🏍️ Eu sou o Motinho, seu assistente virtual do Moto Help! Como posso te ajudar hoje?</p>
                 </div>
             </div>
         </div>
@@ -71,69 +71,61 @@ Características da sua personalidade:
     </div>
 </div>`;
         const chatBotButtonHTML = `<div id="chatbot-button"><div class="chatbot-icon"><i class="fas fa-robot"></i></div></div>`;
-        document.body.insertAdjacentHTML('beforeend', chatBotOverlayHTML);
-        document.body.insertAdjacentHTML('beforeend', chatBotButtonHTML);
+        document.body.insertAdjacentHTML("beforeend", chatBotOverlayHTML);
+        document.body.insertAdjacentHTML("beforeend", chatBotButtonHTML);
     }
 
     setupEventListeners() {
-        const chatBotButton = document.getElementById('chatbot-button');
-        const chatBotOverlay = document.getElementById('chatbot-overlay');
-        const closeButton = document.getElementById('chatbot-close');
-        const input = document.getElementById('chatbot-input');
-        const sendButton = document.getElementById('chatbot-send');
+        const chatBotButton = document.getElementById("chatbot-button");
+        const chatBotOverlay = document.getElementById("chatbot-overlay");
+        const closeButton = document.getElementById("chatbot-close");
+        const input = document.getElementById("chatbot-input");
+        const sendButton = document.getElementById("chatbot-send");
 
         if (!chatBotButton) { console.error("Botão do Chatbot não encontrado!"); return; }
 
-        chatBotButton.addEventListener('click', () => { chatBotOverlay.classList.add('active'); input.focus(); });
-        closeButton.addEventListener('click', () => chatBotOverlay.classList.remove('active'));
-        chatBotOverlay.addEventListener('click', (e) => { if (e.target === chatBotOverlay) chatBotOverlay.classList.remove('active'); });
-        sendButton.addEventListener('click', () => this.sendMessage());
-        input.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendMessage(); } });
-        input.addEventListener('input', () => { sendButton.disabled = input.value.trim() === ''; });
+        chatBotButton.addEventListener("click", () => { chatBotOverlay.classList.add("active"); input.focus(); });
+        closeButton.addEventListener("click", () => chatBotOverlay.classList.remove("active"));
+        chatBotOverlay.addEventListener("click", (e) => { if (e.target === chatBotOverlay) chatBotOverlay.classList.remove("active"); });
+        sendButton.addEventListener("click", () => this.sendMessage());
+        input.addEventListener("keypress", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); this.sendMessage(); } });
+        input.addEventListener("input", () => { sendButton.disabled = input.value.trim() === ""; });
     }
 
     async sendMessage() {
-        const input = document.getElementById('chatbot-input');
+        const input = document.getElementById("chatbot-input");
         const message = input.value.trim();
         if (!message || this.isTyping) return;
 
-        this.addMessage(message, 'user');
-        input.value = '';
-        document.getElementById('chatbot-send').disabled = true;
+        this.addMessage(message, "user");
+        this.conversationHistory.push({ role: "user", content: message }); // Adiciona a mensagem do usuário ao histórico
+
+        input.value = "";
+        document.getElementById("chatbot-send").disabled = true;
         this.showTypingIndicator();
 
         try {
-            const response = await this.callGeminiAPI(message);
+            const response = await this.callGeminiAPI(); // Não passa a mensagem aqui, pois já está no histórico
             this.hideTypingIndicator();
-            const formattedResponse = response.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-            this.addMessage(formattedResponse, 'bot');
+            const formattedResponse = response.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+            this.addMessage(formattedResponse, "bot");
         } catch (error) {
             this.hideTypingIndicator();
-            console.error('Erro ao comunicar com Gemini:', error);
-            this.addMessage('Desculpe, estou com problemas técnicos no momento. 🔧 Tente novamente em alguns instantes!', 'bot');
+            console.error("Erro ao comunicar com Gemini:", error);
+            this.addMessage("Desculpe, estou com problemas técnicos no momento. 🔧 Tente novamente em alguns instantes!", "bot");
         }
     }
 
-    // ======= MÉTODO CORRIGIDO callGeminiAPI =======
-    async callGeminiAPI(message) {
-        this.conversationHistory.push({ role: 'user', content: message });
-
-        // Construir o histórico de conversação no formato correto
+    async callGeminiAPI() {
         const contents = [];
         
-        // Adicionar instrução de sistema como primeira mensagem
-        contents.push({
-            parts: [{
-                text: this.systemPrompt
-            }]
-        });
-
-        // Adicionar histórico de conversação
+        // Adicionar o histórico de conversação existente
+        // A API Gemini exige uma alternância estrita de 'user' e 'model' no histórico.
+        // O `conversationHistory` deve ser uma sequência de {role: 'user', content: '...'}, {role: 'model', content: '...'}, etc.
         for (const msg of this.conversationHistory) {
             contents.push({
-                parts: [{
-                    text: msg.content
-                }]
+                role: msg.role,
+                parts: [{ text: msg.content }]
             });
         }
 
@@ -142,7 +134,9 @@ Características da sua personalidade:
             generationConfig: {
                 temperature: 0.7,
                 maxOutputTokens: 512
-            }
+            },
+            // system_instruction é o campo correto para o prompt do sistema
+            system_instruction: { parts: [{ text: this.systemPrompt }] }
         };
 
         const response = await fetch(`${this.apiUrl}?key=${this.apiKey}`, {
@@ -166,8 +160,10 @@ Características da sua personalidade:
 
         const botResponse = data.candidates[0].content.parts[0].text;
 
-        this.conversationHistory.push({ role: 'assistant', content: botResponse });
+        // Adicionar a resposta do bot ao histórico
+        this.conversationHistory.push({ role: 'model', content: botResponse });
 
+        // Limitar o histórico para evitar que fique muito longo
         if (this.conversationHistory.length > 10) {
             this.conversationHistory = this.conversationHistory.slice(-10);
         }
@@ -176,10 +172,10 @@ Características da sua personalidade:
     }
 
     addMessage(content, sender) {
-        const messagesContainer = document.getElementById('chatbot-messages');
-        const messageDiv = document.createElement('div');
+        const messagesContainer = document.getElementById("chatbot-messages");
+        const messageDiv = document.createElement("div");
         messageDiv.className = `message ${sender}-message`;
-        const avatarHTML = sender === 'bot' ? `<div class="message-avatar"><i class="fas fa-robot"></i></div>` : '';
+        const avatarHTML = sender === "bot" ? `<div class="message-avatar"><i class="fas fa-robot"></i></div>` : "";
         messageDiv.innerHTML = `${avatarHTML}<div class="message-content"><p>${content}</p></div>`;
         messagesContainer.appendChild(messageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -189,12 +185,12 @@ Características da sua personalidade:
         if (this.isTyping) return;
         this.isTyping = true;
 
-        const messagesContainer = document.getElementById('chatbot-messages');
-        if (document.getElementById('typing-indicator')) return;
+        const messagesContainer = document.getElementById("chatbot-messages");
+        if (document.getElementById("typing-indicator")) return;
 
-        const typingDiv = document.createElement('div');
-        typingDiv.id = 'typing-indicator';
-        typingDiv.className = 'message bot-message typing';
+        const typingDiv = document.createElement("div");
+        typingDiv.id = "typing-indicator";
+        typingDiv.className = "message bot-message typing";
         typingDiv.innerHTML = `
             <div class="message-avatar"><i class="fas fa-robot"></i></div>
             <div class="message-content">
@@ -206,12 +202,13 @@ Características da sua personalidade:
 
     hideTypingIndicator() {
         this.isTyping = false;
-        const typingIndicator = document.getElementById('typing-indicator');
+        const typingIndicator = document.getElementById("typing-indicator");
         if (typingIndicator) typingIndicator.remove();
     }
 }
 
 // Inicializa o chatbot após o carregamento completo da página
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
     new GeminiChatBot();
 });
+
