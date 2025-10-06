@@ -445,18 +445,51 @@ class PublicAnunciosManager {
         const profile = anuncio.profiles;
         const imagemHtml = anuncio.imagem ? `<div class="modal-anuncio-image"><img src="${anuncio.imagem}" alt="${anuncio.titulo}"></div>` : '';
         
+        const precoTexto = anuncio.preco ? `R$ ${parseFloat(anuncio.preco).toFixed(2)}` : 'A consultar';
+        const telefoneTexto = profile?.phone || 'Não informado';
+        const enderecoTexto = profile?.address || 'Não informado';
+        const anuncianteTexto = profile?.company_name || profile?.full_name || 'Não informado';
+
         this.modalBody.innerHTML = `
             ${imagemHtml}
-            <h4>${anuncio.titulo}</h4>
-            <p><strong>Anunciante:</strong> ${profile?.company_name || profile?.full_name || 'Não informado'}</p>
-            <p><strong>Descrição:</strong> ${anuncio.descricao}</p>
-            ${anuncio.servicos ? `<p><strong>Serviços:</strong> ${anuncio.servicos}</p>` : ''}
-            <p><strong>Preço:</strong> ${anuncio.preco ? `R$ ${parseFloat(anuncio.preco).toFixed(2)}` : 'A consultar'}</p>
+            <h4 class="modal-details-title">${anuncio.titulo}</h4>
+            <p class="modal-details-anunciante">
+                <i class="fas fa-store"></i>
+                <strong>Anunciante:</strong> ${anuncianteTexto}
+            </p>
+            <p class="modal-details-description">${anuncio.descricao}</p>
+            
+            ${anuncio.servicos ? `
+                <div class="modal-details-section">
+                    <h5><i class="fas fa-cogs"></i> Serviços Oferecidos</h5>
+                    <p>${anuncio.servicos}</p>
+                </div>
+            ` : ''}
+            
+            <div class="modal-details-section">
+                <h5><i class="fas fa-dollar-sign"></i> Preço</h5>
+                <p>${precoTexto}</p>
+            </div>
+
             <hr>
-            <h5>Informações de Contato</h5>
-            <p><strong>Endereço:</strong> ${profile?.address || 'Não informado'}</p>
-            <p><strong>Telefone/WhatsApp:</strong> ${profile?.phone || 'Não informado'}</p>
-            ${anuncio.contato ? `<p><strong>Outros Contatos:</strong> ${anuncio.contato}</p>` : ''}
+            
+            <div class="modal-details-section">
+                <h5><i class="fas fa-info-circle"></i> Informações de Contato</h5>
+                <p class="contact-info">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <strong>Endereço:</strong> ${enderecoTexto}
+                </p>
+                <p class="contact-info">
+                    <i class="fab fa-whatsapp"></i>
+                    <strong>Telefone/WhatsApp:</strong> ${telefoneTexto}
+                </p>
+                ${anuncio.contato ? `
+                    <p class="contact-info">
+                        <i class="fas fa-globe"></i>
+                        <strong>Outros Contatos:</strong> ${anuncio.contato}
+                    </p>
+                ` : ''}
+            </div>
         `;
         modalManager.openModal('detailsModal');
     }
