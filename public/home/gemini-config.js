@@ -3,7 +3,7 @@ class GeminiChatBot {
         // ==================================================================
         // IMPORTANTE: Substitua pela sua chave de API real
         // ==================================================================
-        this.apiKey = 'AIzaSyCiZYODiOpY1uH1SFqTOvSn55WnQo4JpS0'; 
+        this.apiKey = 'AIzaSyB-9CMGSKDd7zViPAb0N906fcQLaAvryqM'; 
         this.apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
         this.conversationHistory = []; // Armazena pares de {role: 'user'/'model', content: 'mensagem'}
         this.isTyping = false;
