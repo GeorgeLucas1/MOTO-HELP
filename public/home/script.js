@@ -94,15 +94,11 @@ class AuthManager {
         const btnAbrirModalCadastro = document.getElementById('btnAbrirModalCadastro');
         const btnGerenciarBusiness = document.getElementById('btnGerenciarBusiness');
 
-        if (currentUser) { // Apenas checar se existe um usuário logado
+        if (currentUser) {
             userDropdown.style.display = 'block';
             userDropdownManager.updateUserInfo(userProfile || { email: currentUser.email });
-
-            // Modificado: Botão Gerenciar Business aparece para todos os usuários logados
-            // pois os anúncios agora são gerenciados localmente
             btnGerenciarBusiness.style.display = 'inline-flex';
             
-            // Botão de cadastro de parceiro só aparece se ainda não for parceiro
             if (userProfile && userProfile.is_partner === true) {
                 btnAbrirModalCadastro.style.display = 'none';
             } else {
@@ -146,7 +142,8 @@ class UserDropdownManager {
     updateUserInfo(profile) {
         if (!profile) return;
         const displayName = profile.company_name || currentUser?.user_metadata?.display_name || profile.email?.split('@')[0] || 'Usuário';
-        document.getElementById('userName').textContent = displayName;
+        document.getElementById('userEmailDisplay').textContent = `SEU EMAIL É: ${profile.email}`;
+        document.getElementById('userTypeDisplay').textContent = `SEU TIPO DE CADASTRO É: ${profile.is_partner ? 'PARCEIRO OFICIAL' : 'USUARIO COMUM'}`;
     }
 }
 
@@ -336,7 +333,6 @@ class PublicAnunciosManager {
             if (error) throw error;
             publicAnuncios = data || [];
             
-            // Adicionar anúncios locais aos públicos
             this.mergeLocalAnuncios();
             this.applyFiltersAndRender(); 
         } catch (error) {
@@ -348,7 +344,6 @@ class PublicAnunciosManager {
     }
 
     mergeLocalAnuncios() {
-        // Mesclar anúncios locais com os públicos
         const localAnuncios = anunciosManager.getLocalAnuncios();
         const allAnuncios = [...publicAnuncios];
         
@@ -521,10 +516,8 @@ class AnunciosManager {
         
         if (!imageInput || !imagePreview) return;
         
-        // Click no preview abre o seletor de arquivo
         imagePreview.addEventListener('click', () => imageInput.click());
         
-        // Drag and drop
         imagePreview.addEventListener('dragover', (e) => {
             e.preventDefault();
             imagePreview.classList.add('dragover');
@@ -543,7 +536,6 @@ class AnunciosManager {
             }
         });
         
-        // Seleção de arquivo
         imageInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -551,14 +543,12 @@ class AnunciosManager {
             }
         });
         
-        // Remover imagem
         btnRemover?.addEventListener('click', () => {
             this.removeImage();
         });
     }
     
     handleImageFile(file) {
-        // Validar tamanho (máx 2MB)
         if (file.size > 2 * 1024 * 1024) {
             toastManager.show('A imagem deve ter no máximo 2MB', 'error');
             return;
@@ -595,14 +585,12 @@ class AnunciosManager {
         this.updateImagePreview(null);
     }
     
-    // Obter anúncios do localStorage
     getLocalAnuncios() {
         if (!currentUser) return [];
         const stored = localStorage.getItem(`${this.storageKey}_${currentUser.id}`);
         return stored ? JSON.parse(stored) : [];
     }
     
-    // Salvar anúncios no localStorage
     saveLocalAnuncios(anuncios) {
         if (!currentUser) return;
         localStorage.setItem(`${this.storageKey}_${currentUser.id}`, JSON.stringify(anuncios));
@@ -614,7 +602,6 @@ class AnunciosManager {
         const title = document.getElementById('anuncioModalTitle');
         
         if (anuncioId) {
-            // Editar anúncio existente
             const anuncios = this.getLocalAnuncios();
             const anuncio = anuncios.find(a => a.id === anuncioId);
             
@@ -628,7 +615,6 @@ class AnunciosManager {
                 document.getElementById('anuncio_preco').value = anuncio.preco || '';
                 document.getElementById('anuncio_contato').value = anuncio.contato || '';
                 
-                // Carregar imagem se existir
                 if (anuncio.imagem) {
                     this.currentImageData = anuncio.imagem;
                     document.getElementById('anuncio_imagem_data').value = anuncio.imagem;
@@ -640,9 +626,9 @@ class AnunciosManager {
                 this.currentEditId = anuncioId;
             }
         } else {
-            // Novo anúncio
             title.textContent = 'Novo Anúncio';
             form.reset();
+            document.getElementById('anuncio_id').value = '';
             this.currentEditId = null;
             this.removeImage();
         }
@@ -699,23 +685,44 @@ class AnunciosManager {
                 ${anuncio.preco ? `<p><strong>Preço:</strong> R$ ${parseFloat(anuncio.preco).toFixed(2)}</p>` : ''}
             </div>
             <div class="anuncio-card-actions">
-                <button class="btn btn-sm btn-outline" data-action="edit" data-id="${anuncio.id}">
+                <button class="btn btn-sm btn-outline btn-edit-anuncio" data-id="${anuncio.id}">
                     <i class="fas fa-edit"></i> Editar
                 </button>
-                <button class="btn btn-sm ${anuncio.status === 'ativo' ? 'btn-warning' : 'btn-primary'}" data-action="toggle" data-id="${anuncio.id}">
+                <button class="btn btn-sm ${anuncio.status === 'ativo' ? 'btn-warning' : 'btn-primary'} btn-toggle-anuncio" data-id="${anuncio.id}">
                     <i class="fas fa-${anuncio.status === 'ativo' ? 'pause' : 'play'}"></i>
                     ${anuncio.status === 'ativo' ? 'Desativar' : 'Ativar'}
                 </button>
-                <button class="btn btn-sm btn-danger" data-action="delete" data-id="${anuncio.id}">
+                <button class="btn btn-sm btn-danger btn-delete-anuncio" data-id="${anuncio.id}">
                     <i class="fas fa-trash"></i> Excluir
                 </button>
             </div>
         `;
         
-        // Event listeners para os botões
-        card.querySelector('[data-action="edit"]').addEventListener('click', () => this.openAnuncioModal(anuncio.id));
-        card.querySelector('[data-action="toggle"]').addEventListener('click', () => this.toggleAnuncioStatus(anuncio.id));
-        card.querySelector('[data-action="delete"]').addEventListener('click', () => this.deleteAnuncio(anuncio.id));
+        // Event listeners usando delegação de eventos
+        const btnEdit = card.querySelector('.btn-edit-anuncio');
+        const btnToggle = card.querySelector('.btn-toggle-anuncio');
+        const btnDelete = card.querySelector('.btn-delete-anuncio');
+        
+        if (btnEdit) {
+            btnEdit.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.openAnuncioModal(anuncio.id);
+            });
+        }
+        
+        if (btnToggle) {
+            btnToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleAnuncioStatus(anuncio.id);
+            });
+        }
+        
+        if (btnDelete) {
+            btnDelete.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteAnuncio(anuncio.id);
+            });
+        }
         
         return card;
     }
@@ -738,7 +745,7 @@ class AnunciosManager {
             servicos: formData.get('servicos'),
             preco: formData.get('preco'),
             contato: formData.get('contato'),
-            imagem: this.currentImageData || null, // Adicionar imagem
+            imagem: this.currentImageData || null,
             status: 'ativo',
             user_id: currentUser.id
         };
@@ -746,14 +753,12 @@ class AnunciosManager {
         let anuncios = this.getLocalAnuncios();
         
         if (this.currentEditId) {
-            // Editar anúncio existente
             const index = anuncios.findIndex(a => a.id === this.currentEditId);
             if (index !== -1) {
                 anuncios[index] = { ...anuncios[index], ...anuncioData };
                 toastManager.show('Anúncio atualizado com sucesso!', 'success');
             }
         } else {
-            // Criar novo anúncio
             const newAnuncio = {
                 ...anuncioData,
                 id: Date.now().toString(),
@@ -766,8 +771,6 @@ class AnunciosManager {
         this.saveLocalAnuncios(anuncios);
         modalManager.closeModal('modalAnuncio');
         this.loadAnuncios();
-        
-        // Atualizar a lista pública
         publicAnunciosManager.fetchAllAnuncios();
     }
     
@@ -780,8 +783,6 @@ class AnunciosManager {
             this.saveLocalAnuncios(anuncios);
             this.loadAnuncios();
             toastManager.show('Status do anúncio atualizado!', 'success');
-            
-            // Atualizar a lista pública
             publicAnunciosManager.fetchAllAnuncios();
         }
     }
@@ -794,8 +795,6 @@ class AnunciosManager {
         this.saveLocalAnuncios(anuncios);
         this.loadAnuncios();
         toastManager.show('Anúncio excluído com sucesso!', 'success');
-        
-        // Atualizar a lista pública
         publicAnunciosManager.fetchAllAnuncios();
     }
 }
@@ -818,7 +817,6 @@ document.addEventListener('DOMContentLoaded', () => {
     publicAnunciosManager = new PublicAnunciosManager();
     anunciosManager = new AnunciosManager();
 
-    // --- CÓDIGO PARA ATIVAR FILTROS E PESQUISA ---
     const searchInput = document.getElementById('searchInput');
     const filterCheckboxes = document.querySelectorAll('input[name="filter"]');
     const clearSearchBtn = document.getElementById('clearSearch');

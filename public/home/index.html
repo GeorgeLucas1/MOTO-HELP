@@ -42,8 +42,9 @@
                             <div class="dropdown-content" id="userDropdownContent">
                                 <div class="dropdown-header">
                                     <div class="user-info">
-                                         <span> AUTENTICADO COM SUCESSO, seu email É </span>
-                                        <span class="user-name" id="userName">EMAIL:</span>
+                                         <span class="auth-status">AUTENTICADO COM SUCESSO!</span>
+                                        <span class="user-email" id="userEmailDisplay"></span>
+                                        <span class="user-type" id="userTypeDisplay"></span>
                                     </div>
                                 </div>
                                 <div class="dropdown-divider"></div>
@@ -241,8 +242,6 @@
                             <input type="text" id="edit_nome_empresa" name="nome_empresa" class="form-input">
                         </div>
 
-                      
-
                         <div class="form-group">
                             <label for="edit_telefone" class="form-label">Telefone / WhatsApp *</label>
                             <input type="tel" id="edit_telefone" name="telefone" class="form-input" placeholder="(00) 00000-0000" required>
@@ -321,8 +320,6 @@
                             <label for="nome_empresa" class="form-label">Nome da Empresa *</label>
                             <input type="text" id="nome_empresa" name="nome_empresa" class="form-input">
                         </div>
-                        
-                        
                         
                         <div class="form-group">
                             <label for="telefone" class="form-label">Telefone / WhatsApp *</label>
@@ -467,12 +464,7 @@
     <!-- Contêiner para as notificações (Toasts) -->
     <div id="toast-container"></div>
 
-
-    <!-- ================================== -->
-    <!--       FIM DO CÓDIGO DO CHATBOT       -->
-    <!-- ================================== -->
     <script src="gemini-config.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
 </body>
