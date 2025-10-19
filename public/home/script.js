@@ -265,22 +265,28 @@ class FormManager {
         const formData = new FormData(form);
         
         const profileData = {
+            id: currentUser.id,  // ✅ ADICIONAR ID
+            email: currentUser.email,  // ✅ ADICIONAR EMAIL
             phone: formData.get('telefone'),
             cpf_cnpj: formData.get('cpf_cnpj'),
             address: formData.get('endereco'),
             category: formData.get('categoria'),
             company_name: formData.get('is_empresa') === 'sim' ? formData.get('nome_empresa') : null,
-            is_partner: true
+            is_partner: true,
+            updated_at: new Date().toISOString()  // ✅ ADICIONAR TIMESTAMP
         };
         
+        // ✅ USAR UPSERT ao invés de UPDATE
         const { error } = await supabase
             .from('profiles')
-            .update(profileData)
-            .eq('id', currentUser.id);
+            .upsert(profileData, { 
+                onConflict: 'id',
+                ignoreDuplicates: false 
+            });
             
         if (error) {
             toastManager.show('Erro ao se tornar parceiro. Verifique os dados.', 'error');
-            console.error(error);
+            console.error('Erro detalhado:', error);
         } else {
             toastManager.show('Parabéns, você agora é um parceiro!', 'success');
             await authManager.fetchUserProfile();
@@ -288,6 +294,7 @@ class FormManager {
             modalManager.closeModal('modalCadastro');
         }
     }
+    
     
     async handleEditFormSubmit(event) {
         event.preventDefault();
