@@ -379,12 +379,39 @@ class PublicAnunciosManager {
 
     async fetchAllAnuncios() {
         this.setLoading(true);
+        console.log('🔄 Iniciando busca de anúncios...');
+        console.log('🔗 Supabase URL:', SUPABASE_URL);
+        console.log('🔑 Supabase client ativo:', !!supabase);
+        
         try {
+            // Testa conexão básica primeiro
+            const { data: testData, error: testError } = await supabase
+                .from('anuncios')
+                .select('*')
+                .limit(1);
+            
+            console.log('🧪 Teste de conexão:', { testData, testError });
+            
+            if (testError) {
+                console.error('❌ ERRO NA CONEXÃO:', testError);
+                throw new Error(`Falha na conexão: ${testError.message}`);
+            }
+
+            // Query completa - testa primeiro SEM o JOIN
+            console.log('📥 Buscando anúncios sem JOIN...');
+            const { data: dataSimples, error: errorSimples } = await supabase
+                .from('anuncios')
+                .select('*')
+                .eq('status', 'ativo');
+            
+            console.log('✅ Anúncios sem JOIN:', dataSimples?.length);
+            
+            // Agora tenta com JOIN
             const { data, error } = await supabase
                 .from('anuncios')
                 .select(`
                     *,
-                    profiles: user_id (
+                    profiles!user_id (
                         id,
                         email,
                         full_name,
@@ -398,16 +425,45 @@ class PublicAnunciosManager {
                 .eq('status', 'ativo')
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            console.log('📡 Resposta do Supabase:', { 
+                data: data, 
+                error: error,
+                totalAnuncios: data?.length 
+            });
+
+            if (error) {
+                console.error('❌ ERRO DO SUPABASE:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint
+                });
+                throw error;
+            }
             
             publicAnuncios = data || [];
-            console.log('✅ Anúncios carregados:', publicAnuncios.length);
-            console.log('📋 Dados dos anúncios:', publicAnuncios);
+            console.log('✅ Anúncios carregados com SUCESSO:', publicAnuncios.length);
+            
+            if (publicAnuncios.length > 0) {
+                console.log('📋 Exemplo de anúncio:', publicAnuncios[0]);
+                console.table(publicAnuncios.map(a => ({
+                    titulo: a.titulo,
+                    categoria: a.categoria,
+                    status: a.status,
+                    empresa: a.profiles?.company_name || 'N/A'
+                })));
+            } else {
+                console.warn('⚠️ ARRAY VAZIO! Possíveis causas:');
+                console.warn('1. Todos os anúncios estão com status diferente de "ativo"');
+                console.warn('2. RLS está bloqueando');
+                console.warn('3. Tabela está vazia');
+            }
             
             this.applyFiltersAndRender(); 
         } catch (error) {
-            console.error('❌ Erro ao carregar anúncios públicos:', error.message);
-            this.setError('Não foi possível carregar os anúncios.');
+            console.error('❌ ERRO CRÍTICO:', error);
+            console.error('Stack trace:', error.stack);
+            this.setError(`Erro ao carregar: ${error.message}`);
         } finally {
             this.setLoading(false);
         }
@@ -418,19 +474,29 @@ class PublicAnunciosManager {
         const searchTerm = searchInput?.value?.toLowerCase()?.trim() || '';
         const activeCategories = Array.from(document.querySelectorAll('input[name="filter"]:checked')).map(cb => cb.value);
 
-        console.log('🔍 Aplicando filtros:', { searchTerm, activeCategories });
+        console.log('🔍 FILTROS APLICADOS:', { 
+            searchTerm, 
+            activeCategories,
+            totalAnuncios: publicAnuncios.length 
+        });
 
         let filteredAnuncios = [...publicAnuncios];
 
+        // Filtro de categoria
         if (activeCategories.length > 0) {
+            console.log('📂 Filtrando por categorias:', activeCategories);
             filteredAnuncios = filteredAnuncios.filter(anuncio => {
+                console.log(`- Anúncio "${anuncio.titulo}": categoria="${anuncio.categoria}"`);
                 const match = activeCategories.includes(anuncio.categoria);
+                console.log(`  → Match: ${match}`);
                 return match;
             });
-            console.log('Após filtro de categoria:', filteredAnuncios.length);
+            console.log('✅ Após filtro de categoria:', filteredAnuncios.length);
         }
 
+        // Filtro de busca
         if (searchTerm) {
+            console.log('🔎 Filtrando por busca:', searchTerm);
             filteredAnuncios = filteredAnuncios.filter(anuncio => {
                 const profile = anuncio.profiles;
                 const searchString = [
@@ -441,13 +507,17 @@ class PublicAnunciosManager {
                     profile?.full_name || ''
                 ].filter(Boolean).join(' ').toLowerCase();
                 
+                console.log(`- Anúncio "${anuncio.titulo}"`);
+                console.log(`  String de busca: "${searchString.substring(0, 100)}..."`);
+                
                 const match = searchString.includes(searchTerm);
+                console.log(`  → Match com "${searchTerm}": ${match}`);
                 return match;
             });
-            console.log('Após filtro de busca:', filteredAnuncios.length);
+            console.log('✅ Após filtro de busca:', filteredAnuncios.length);
         }
         
-        console.log('📊 Total de anúncios filtrados:', filteredAnuncios.length);
+        console.log('📊 RESULTADO FINAL:', filteredAnuncios.length, 'anúncios');
         this.render(filteredAnuncios);
     }
 
