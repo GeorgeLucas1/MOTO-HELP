@@ -1,5 +1,4 @@
 // ===== CONFIGURAÇÃO DO SUPABASE =====
-// --- 1. INICIALIZAÇÃO DO SUPABASE ---
 const SUPABASE_URL = 'https://oeuabuswavmlwquaujji.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ldWFidXN3YXZtbHdxdWF1amppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NDUyNjEsImV4cCI6MjA3NTAyMTI2MX0.jc0o-FLPNYLak1kU3b_1r8jns0yuGZnJ8W2Mlz36t9Y';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -7,11 +6,9 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ===== ESTADO GLOBAL DA APLICAÇÃO =====
 let currentUser = null;
 let userProfile = null;
-let publicAnuncios = []; // Armazena todos os anúncios para filtragem no cliente
-let userAnuncios = []; // Armazena anúncios locais do usuário
+let publicAnuncios = [];
 let currentPage = 1;
 const itemsPerPage = 6;
-let totalPages = 20;
 let searchDebounceTimer;
 
 // ===== GERENCIADOR DE NOTIFICAÇÕES (TOASTS) =====
@@ -50,11 +47,13 @@ class AuthManager {
             else if (event === 'SIGNED_OUT') this.handleUserSignOut();
         });
     }
+    
     async checkUserSession() {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session) await this.handleUserSignIn(session, false); // Não mostrar saudação no carregamento inicial
+        if (session) await this.handleUserSignIn(session, false);
         else this.handleUserSignOut();
     }
+    
     async handleUserSignIn(session, showGreeting = true) {
         currentUser = session.user;
         await this.fetchUserProfile();
@@ -68,20 +67,27 @@ class AuthManager {
             else if (horaAtual >= 12 && horaAtual < 18) saudacao = 'Boa tarde';
             else saudacao = 'Boa noite';
             setTimeout(() => {
-                alert(`${saudacao}, ${displayName}! Bem-vindo(a) de volta.`);
+                toastManager.show(`${saudacao}, ${displayName}! Bem-vindo(a) de volta.`, 'success');
             }, 100);
         }
     }
+    
     handleUserSignOut() {
         currentUser = null;
         userProfile = null;
         this.updateUI();
         window.location.reload();
     }
+    
     async fetchUserProfile() {
         if (!currentUser) return;
         try {
-            const { data, error, status } = await supabase.from('profiles').select(`*`).eq('id', currentUser.id).single();
+            const { data, error, status } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+                
             if (error && status !== 406) throw error;
             userProfile = data;
         } catch (error) {
@@ -89,6 +95,7 @@ class AuthManager {
             userProfile = null;
         }
     }
+    
     updateUI() {
         const userDropdown = document.getElementById('userDropdown');
         const btnAbrirModalCadastro = document.getElementById('btnAbrirModalCadastro');
@@ -97,17 +104,20 @@ class AuthManager {
         if (currentUser) {
             userDropdown.style.display = 'block';
             userDropdownManager.updateUserInfo(userProfile || { email: currentUser.email });
-            btnGerenciarBusiness.style.display = 'inline-flex';
             
+            // Se o usuário é parceiro
             if (userProfile && userProfile.is_partner === true) {
                 btnAbrirModalCadastro.style.display = 'none';
+                btnGerenciarBusiness.style.display = 'inline-flex';
             } else {
+                // Usuário comum
                 btnAbrirModalCadastro.style.display = 'inline-flex';
+                btnGerenciarBusiness.style.display = 'none';
             }
         } else {
             userDropdown.style.display = 'none';
             btnGerenciarBusiness.style.display = 'none';
-            btnAbrirModalCadastro.style.display = 'inline-flex';
+            btnAbrirModalCadastro.style.display = 'none';
         }
     }
     
@@ -158,13 +168,25 @@ class ModalManager {
                 setTimeout(() => { window.location.href = '/public/login/index.html'; }, 2000);
             }
         });
-        document.getElementById('btnGerenciarBusiness')?.addEventListener('click', () => this.openModal('modalAnuncios'));
-        document.getElementById('editProfileButton')?.addEventListener('click', () => {
-            document.getElementById('userDropdown')?.classList.remove('active');
-            this.openModal('modalEditar');
+        
+        document.getElementById('btnGerenciarBusiness')?.addEventListener('click', () => {
+            if (userProfile && userProfile.is_partner === true) {
+                this.openModal('modalAnuncios');
+            } else {
+                toastManager.show('Apenas parceiros podem gerenciar anúncios.', 'error');
+            }
         });
+        
+        document.getElementById('editProfileButton')?.addEventListener('click', () => {
+            if (userProfile && userProfile.is_partner === true) {
+                document.getElementById('userDropdown')?.classList.remove('active');
+                this.openModal('modalEditar');
+            } else {
+                toastManager.show('Você precisa ser um parceiro para editar o perfil Business.', 'error');
+            }
+        });
+        
         document.getElementById('btnNovoAnuncio')?.addEventListener('click', () => anunciosManager.openAnuncioModal());
-        document.getElementById('btnPrimeiroAnuncio')?.addEventListener('click', () => anunciosManager.openAnuncioModal());
 
         document.addEventListener('click', (e) => {
             if (e.target.hasAttribute('data-close-modal')) {
@@ -172,6 +194,7 @@ class ModalManager {
                 if (modal) this.closeModal(modal.id);
             }
         });
+        
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 const activeModal = document.querySelector('.modal.active');
@@ -179,6 +202,7 @@ class ModalManager {
             }
         });
     }
+    
     openModal(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -189,6 +213,7 @@ class ModalManager {
         if (modalId === 'modalAnuncios') anunciosManager.loadAnuncios();
         if (modalId === 'modalEditar') formManager.loadUserDataForEdit();
     }
+    
     closeModal(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -210,6 +235,7 @@ class FormManager {
         this.setupConditionalField('formEditar', 'is_empresa', 'edit_empresaFieldContainer');
         this.setupInputMasks();
     }
+    
     setupConditionalField(formId, radioName, containerId) {
         const form = document.getElementById(formId);
         if (!form) return;
@@ -227,14 +253,17 @@ class FormManager {
             });
         });
     }
+    
     async handlePartnerFormSubmit(event) {
         event.preventDefault();
         if (!currentUser) {
             toastManager.show('Você precisa estar logado para se tornar um parceiro.', 'error');
             return;
         }
+        
         const form = event.target;
         const formData = new FormData(form);
+        
         const profileData = {
             phone: formData.get('telefone'),
             cpf_cnpj: formData.get('cpf_cnpj'),
@@ -243,7 +272,12 @@ class FormManager {
             company_name: formData.get('is_empresa') === 'sim' ? formData.get('nome_empresa') : null,
             is_partner: true
         };
-        const { error } = await supabase.from('profiles').update(profileData).eq('id', currentUser.id);
+        
+        const { error } = await supabase
+            .from('profiles')
+            .update(profileData)
+            .eq('id', currentUser.id);
+            
         if (error) {
             toastManager.show('Erro ao se tornar parceiro. Verifique os dados.', 'error');
             console.error(error);
@@ -254,14 +288,22 @@ class FormManager {
             modalManager.closeModal('modalCadastro');
         }
     }
+    
     async handleEditFormSubmit(event) {
         event.preventDefault();
         if (!currentUser) {
             toastManager.show('Sessão expirada. Faça login novamente.', 'error');
             return;
         }
+        
+        if (!userProfile || !userProfile.is_partner) {
+            toastManager.show('Apenas parceiros podem editar o perfil Business.', 'error');
+            return;
+        }
+        
         const form = event.target;
         const formData = new FormData(form);
+        
         const profileData = {
             phone: formData.get('telefone'),
             cpf_cnpj: formData.get('cpf_cnpj_editar'),
@@ -269,7 +311,12 @@ class FormManager {
             category: formData.get('categoria'),
             company_name: formData.get('is_empresa') === 'sim' ? formData.get('edit_nome_empresa') : null,
         };
-        const { error } = await supabase.from('profiles').update(profileData).eq('id', currentUser.id);
+        
+        const { error } = await supabase
+            .from('profiles')
+            .update(profileData)
+            .eq('id', currentUser.id);
+            
         if (error) {
             toastManager.show('Erro ao atualizar o perfil.', 'error');
             console.error(error);
@@ -280,6 +327,7 @@ class FormManager {
             modalManager.closeModal('modalEditar');
         }
     }
+    
     loadUserDataForEdit() {
         if (!userProfile) return;
         document.getElementById('edit_telefone').value = userProfile.phone || '';
@@ -294,6 +342,7 @@ class FormManager {
         inputEmpresa.value = userProfile.company_name || '';
         inputEmpresa.required = isEmpresa;
     }
+    
     setupInputMasks() {
         const applyMask = (input, maskFunction) => {
             input.addEventListener('input', (e) => { e.target.value = maskFunction(e.target.value); });
@@ -327,13 +376,25 @@ class PublicAnunciosManager {
         try {
             const { data, error } = await supabase
                 .from('anuncios')
-                .select(`*, profiles: profiles (*)`)
-                .eq('status', 'ativo');
+                .select(`
+                    *,
+                    profiles: user_id (
+                        id,
+                        email,
+                        full_name,
+                        phone,
+                        address,
+                        category,
+                        company_name,
+                        is_partner
+                    )
+                `)
+                .eq('status', 'ativo')
+                .order('created_at', { ascending: false });
 
             if (error) throw error;
             publicAnuncios = data || [];
             
-            this.mergeLocalAnuncios();
             this.applyFiltersAndRender(); 
         } catch (error) {
             console.error('Erro ao carregar anúncios públicos:', error.message);
@@ -341,23 +402,6 @@ class PublicAnunciosManager {
         } finally {
             this.setLoading(false);
         }
-    }
-
-    mergeLocalAnuncios() {
-        const localAnuncios = anunciosManager.getLocalAnuncios();
-        const allAnuncios = [...publicAnuncios];
-        
-        localAnuncios.forEach(localAnuncio => {
-            if (localAnuncio.status === 'ativo') {
-                allAnuncios.push({
-                    ...localAnuncio,
-                    profiles: userProfile,
-                    isLocal: true
-                });
-            }
-        });
-        
-        publicAnuncios = allAnuncios;
     }
 
     applyFiltersAndRender() {
@@ -411,14 +455,13 @@ class PublicAnunciosManager {
         
         const profile = anuncio.profiles;
         const displayName = profile?.company_name || profile?.full_name || 'Parceiro';
-        const localBadge = anuncio.isLocal ? '<span class="local-badge">Local</span>' : '';
         const imagemHtml = anuncio.imagem ? `<div class="anuncio-image"><img src="${anuncio.imagem}" alt="${anuncio.titulo}"></div>` : '';
 
         card.innerHTML = `
             ${imagemHtml}
             <div class="public-anuncio-header">
                 <h3 class="public-anuncio-title">${anuncio.titulo || 'Título'}</h3>
-                <p class="public-anuncio-empresa">${displayName} ${localBadge}</p>
+                <p class="public-anuncio-empresa">${displayName}</p>
                 <span class="public-anuncio-categoria">
                     <i class="fas ${anuncio.categoria === 'oficina' ? 'fa-tools' : 'fa-user-cog'}"></i>
                     ${anuncio.categoria}
@@ -499,10 +542,9 @@ class PublicAnunciosManager {
     setEmpty(show) { if (this.emptyEl) this.emptyEl.style.display = show ? 'block' : 'none'; }
 }
 
-// ===== GERENCIADOR DE ANÚNCIOS LOCAIS =====
+// ===== GERENCIADOR DE ANÚNCIOS =====
 class AnunciosManager {
     constructor() {
-        this.storageKey = 'motohelp_anuncios_locais';
         this.currentEditId = null;
         this.currentImageData = null;
         document.getElementById('formAnuncio')?.addEventListener('submit', (e) => this.handleAnuncioSubmit(e));
@@ -585,84 +627,56 @@ class AnunciosManager {
         this.updateImagePreview(null);
     }
     
-    getLocalAnuncios() {
-        if (!currentUser) return [];
-        const stored = localStorage.getItem(`${this.storageKey}_${currentUser.id}`);
-        return stored ? JSON.parse(stored) : [];
-    }
-    
-    saveLocalAnuncios(anuncios) {
-        if (!currentUser) return;
-        localStorage.setItem(`${this.storageKey}_${currentUser.id}`, JSON.stringify(anuncios));
-    }
-    
-    openAnuncioModal(anuncioId = null) {
-        const modal = document.getElementById('modalAnuncio');
-        const form = document.getElementById('formAnuncio');
-        const title = document.getElementById('anuncioModalTitle');
-        
-        if (anuncioId) {
-            const anuncios = this.getLocalAnuncios();
-            const anuncio = anuncios.find(a => a.id === anuncioId);
-            
-            if (anuncio) {
-                title.textContent = 'Editar Anúncio';
-                document.getElementById('anuncio_id').value = anuncio.id;
-                document.getElementById('anuncio_titulo').value = anuncio.titulo;
-                document.getElementById('anuncio_descricao').value = anuncio.descricao;
-                document.getElementById('anuncio_categoria').value = anuncio.categoria;
-                document.getElementById('anuncio_servicos').value = anuncio.servicos || '';
-                document.getElementById('anuncio_preco').value = anuncio.preco || '';
-                document.getElementById('anuncio_contato').value = anuncio.contato || '';
-                
-                if (anuncio.imagem) {
-                    this.currentImageData = anuncio.imagem;
-                    document.getElementById('anuncio_imagem_data').value = anuncio.imagem;
-                    this.updateImagePreview(anuncio.imagem);
-                } else {
-                    this.removeImage();
-                }
-                
-                this.currentEditId = anuncioId;
-            }
-        } else {
-            title.textContent = 'Novo Anúncio';
-            form.reset();
-            document.getElementById('anuncio_id').value = '';
-            this.currentEditId = null;
-            this.removeImage();
-        }
-        
-        modalManager.openModal('modalAnuncio');
-    }
-
-    loadAnuncios() {
+    async loadAnuncios() {
         const container = document.getElementById('anunciosListContainer');
         if (!container) return;
         
-        const anuncios = this.getLocalAnuncios();
-        
-        if (anuncios.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon"><i class="fas fa-bullhorn"></i></div>
-                    <h4>Nenhum anúncio cadastrado</h4>
-                    <p>Crie seu primeiro anúncio para começar a divulgar seus serviços</p>
-                    <button class="btn btn-primary" id="btnPrimeiroAnuncio">
-                        <i class="fas fa-plus"></i>
-                        Criar Primeiro Anúncio
-                    </button>
-                </div>
-            `;
-            document.getElementById('btnPrimeiroAnuncio')?.addEventListener('click', () => this.openAnuncioModal());
+        if (!currentUser) {
+            container.innerHTML = '<p>Você precisa estar logado.</p>';
             return;
         }
         
-        container.innerHTML = '';
-        anuncios.forEach(anuncio => {
-            const card = this.createAnuncioManagementCard(anuncio);
-            container.appendChild(card);
-        });
+        if (!userProfile || !userProfile.is_partner) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-exclamation-circle"></i></div>
+                    <h4>Acesso Negado</h4>
+                    <p>Apenas parceiros podem criar e gerenciar anúncios.</p>
+                    <p>Torne-se um parceiro para começar a divulgar seus serviços!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        try {
+            const { data, error } = await supabase
+                .from('anuncios')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+                
+            if (error) throw error;
+            
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-bullhorn"></i></div>
+                        <h4>Nenhum anúncio cadastrado</h4>
+                        <p>Crie seu primeiro anúncio para começar a divulgar seus serviços</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            data.forEach(anuncio => {
+                const card = this.createAnuncioManagementCard(anuncio);
+                container.appendChild(card);
+            });
+        } catch (error) {
+            console.error('Erro ao carregar anúncios:', error.message);
+            toastManager.show('Erro ao carregar seus anúncios.', 'error');
+        }
     }
 
     createAnuncioManagementCard(anuncio) {
@@ -698,7 +712,6 @@ class AnunciosManager {
             </div>
         `;
         
-        // Event listeners usando delegação de eventos
         const btnEdit = card.querySelector('.btn-edit-anuncio');
         const btnToggle = card.querySelector('.btn-toggle-anuncio');
         const btnDelete = card.querySelector('.btn-delete-anuncio');
@@ -727,11 +740,73 @@ class AnunciosManager {
         return card;
     }
 
-    handleAnuncioSubmit(event) {
+    async openAnuncioModal(anuncioId = null) {
+        if (!userProfile || !userProfile.is_partner) {
+            toastManager.show('Apenas parceiros podem criar anúncios.', 'error');
+            return;
+        }
+        
+        const modal = document.getElementById('modalAnuncio');
+        const form = document.getElementById('formAnuncio');
+        const title = document.getElementById('anuncioModalTitle');
+        
+        if (anuncioId) {
+            try {
+                const { data, error } = await supabase
+                    .from('anuncios')
+                    .select('*')
+                    .eq('id', anuncioId)
+                    .eq('user_id', currentUser.id)
+                    .single();
+                    
+                if (error) throw error;
+                
+                if (data) {
+                    title.textContent = 'Editar Anúncio';
+                    document.getElementById('anuncio_id').value = data.id;
+                    document.getElementById('anuncio_titulo').value = data.titulo;
+                    document.getElementById('anuncio_descricao').value = data.descricao;
+                    document.getElementById('anuncio_categoria').value = data.categoria;
+                    document.getElementById('anuncio_servicos').value = data.servicos || '';
+                    document.getElementById('anuncio_preco').value = data.preco || '';
+                    document.getElementById('anuncio_contato').value = data.contato || '';
+                    
+                    if (data.imagem) {
+                        this.currentImageData = data.imagem;
+                        document.getElementById('anuncio_imagem_data').value = data.imagem;
+                        this.updateImagePreview(data.imagem);
+                    } else {
+                        this.removeImage();
+                    }
+                    
+                    this.currentEditId = anuncioId;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar anúncio:', error.message);
+                toastManager.show('Erro ao carregar o anúncio.', 'error');
+                return;
+            }
+        } else {
+            title.textContent = 'Novo Anúncio';
+            form.reset();
+            document.getElementById('anuncio_id').value = '';
+            this.currentEditId = null;
+            this.removeImage();
+        }
+        
+        modalManager.openModal('modalAnuncio');
+    }
+
+    async handleAnuncioSubmit(event) {
         event.preventDefault();
         
         if (!currentUser) {
             toastManager.show('Você precisa estar logado.', 'error');
+            return;
+        }
+        
+        if (!userProfile || !userProfile.is_partner) {
+            toastManager.show('Apenas parceiros podem criar anúncios.', 'error');
             return;
         }
         
@@ -742,60 +817,94 @@ class AnunciosManager {
             titulo: formData.get('titulo'),
             descricao: formData.get('descricao'),
             categoria: formData.get('categoria'),
-            servicos: formData.get('servicos'),
-            preco: formData.get('preco'),
-            contato: formData.get('contato'),
+            servicos: formData.get('servicos') || null,
+            preco: formData.get('preco') || null,
+            contato: formData.get('contato') || null,
             imagem: this.currentImageData || null,
             status: 'ativo',
             user_id: currentUser.id
         };
         
-        let anuncios = this.getLocalAnuncios();
-        
-        if (this.currentEditId) {
-            const index = anuncios.findIndex(a => a.id === this.currentEditId);
-            if (index !== -1) {
-                anuncios[index] = { ...anuncios[index], ...anuncioData };
+        try {
+            if (this.currentEditId) {
+                // Atualizar anúncio existente
+                const { error } = await supabase
+                    .from('anuncios')
+                    .update(anuncioData)
+                    .eq('id', this.currentEditId)
+                    .eq('user_id', currentUser.id);
+                    
+                if (error) throw error;
                 toastManager.show('Anúncio atualizado com sucesso!', 'success');
+            } else {
+                // Criar novo anúncio
+                const { error } = await supabase
+                    .from('anuncios')
+                    .insert([anuncioData]);
+                    
+                if (error) throw error;
+                toastManager.show('Anúncio criado com sucesso!', 'success');
             }
-        } else {
-            const newAnuncio = {
-                ...anuncioData,
-                id: Date.now().toString(),
-                created_at: new Date().toISOString()
-            };
-            anuncios.push(newAnuncio);
-            toastManager.show('Anúncio criado com sucesso!', 'success');
-        }
-        
-        this.saveLocalAnuncios(anuncios);
-        modalManager.closeModal('modalAnuncio');
-        this.loadAnuncios();
-        publicAnunciosManager.fetchAllAnuncios();
-    }
-    
-    toggleAnuncioStatus(anuncioId) {
-        let anuncios = this.getLocalAnuncios();
-        const index = anuncios.findIndex(a => a.id === anuncioId);
-        
-        if (index !== -1) {
-            anuncios[index].status = anuncios[index].status === 'ativo' ? 'inativo' : 'ativo';
-            this.saveLocalAnuncios(anuncios);
+            
+            modalManager.closeModal('modalAnuncio');
             this.loadAnuncios();
-            toastManager.show('Status do anúncio atualizado!', 'success');
             publicAnunciosManager.fetchAllAnuncios();
+        } catch (error) {
+            console.error('Erro ao salvar anúncio:', error.message);
+            toastManager.show('Erro ao salvar o anúncio. Verifique os dados.', 'error');
         }
     }
     
-    deleteAnuncio(anuncioId) {
+    async toggleAnuncioStatus(anuncioId) {
+        try {
+            // Buscar o anúncio atual
+            const { data: anuncio, error: fetchError } = await supabase
+                .from('anuncios')
+                .select('status')
+                .eq('id', anuncioId)
+                .eq('user_id', currentUser.id)
+                .single();
+                
+            if (fetchError) throw fetchError;
+            
+            const newStatus = anuncio.status === 'ativo' ? 'inativo' : 'ativo';
+            
+            const { error } = await supabase
+                .from('anuncios')
+                .update({ status: newStatus })
+                .eq('id', anuncioId)
+                .eq('user_id', currentUser.id);
+                
+            if (error) throw error;
+            
+            toastManager.show('Status do anúncio atualizado!', 'success');
+            this.loadAnuncios();
+            publicAnunciosManager.fetchAllAnuncios();
+        } catch (error) {
+            console.error('Erro ao alterar status:', error.message);
+            toastManager.show('Erro ao alterar o status do anúncio.', 'error');
+        }
+    }
+    
+    async deleteAnuncio(anuncioId) {
         if (!confirm('Tem certeza que deseja excluir este anúncio?')) return;
         
-        let anuncios = this.getLocalAnuncios();
-        anuncios = anuncios.filter(a => a.id !== anuncioId);
-        this.saveLocalAnuncios(anuncios);
-        this.loadAnuncios();
-        toastManager.show('Anúncio excluído com sucesso!', 'success');
-        publicAnunciosManager.fetchAllAnuncios();
+        try {
+            const { error } = await supabase
+                .from('anuncios')
+                .delete()
+                .eq('id', anuncioId)
+                .eq('user_id', currentUser.id);
+                
+            if (error) throw error;
+            
+            toastManager.show('Anúncio excluído com sucesso!', 'success');
+            this.loadAnuncios();
+            publicAnunciosManager.fetchAllAnuncios();
+        } catch (error) {
+            console.error('Erro ao excluir anúncio:', error.message);
+            toastManager.show('Erro ao excluir o anúncio.', 'error');
+        }
     }
 }
 
@@ -841,8 +950,27 @@ document.addEventListener('DOMContentLoaded', () => {
         publicAnunciosManager.applyFiltersAndRender();
     });
 
-    document.getElementById('excluirContaLink')?.addEventListener('click', () => {
-        alert("A exclusão de conta deve ser implementada com uma Supabase Edge Function por segurança.");
+    document.getElementById('excluirContaLink')?.addEventListener('click', async () => {
+        if (confirm('ATENÇÃO: Esta ação é irreversível! Deseja realmente excluir sua conta?')) {
+            try {
+                // Primeiro deletar anúncios do usuário
+                await supabase.from('anuncios').delete().eq('user_id', currentUser.id);
+                
+                // Depois deletar o perfil (isso também deletará o usuário devido ao CASCADE)
+                await supabase.from('profiles').delete().eq('id', currentUser.id);
+                
+                // Fazer logout
+                await supabase.auth.signOut();
+                
+                toastManager.show('Conta excluída com sucesso.', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } catch (error) {
+                console.error('Erro ao excluir conta:', error.message);
+                toastManager.show('Erro ao excluir a conta. Entre em contato com o suporte.', 'error');
+            }
+        }
     });
 
     document.addEventListener('click', function(event) {
