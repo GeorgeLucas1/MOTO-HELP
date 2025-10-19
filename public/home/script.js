@@ -105,12 +105,10 @@ class AuthManager {
             userDropdown.style.display = 'block';
             userDropdownManager.updateUserInfo(userProfile || { email: currentUser.email });
             
-            // Se o usuário é parceiro
             if (userProfile && userProfile.is_partner === true) {
                 btnAbrirModalCadastro.style.display = 'none';
                 btnGerenciarBusiness.style.display = 'inline-flex';
             } else {
-                // Usuário comum
                 btnAbrirModalCadastro.style.display = 'inline-flex';
                 btnGerenciarBusiness.style.display = 'none';
             }
@@ -277,7 +275,6 @@ class FormManager {
             updated_at: new Date().toISOString()
         };
         
-        // ✅ USAR UPSERT ao invés de UPDATE
         const { error } = await supabase
             .from('profiles')
             .upsert(profileData, { 
@@ -295,7 +292,6 @@ class FormManager {
             modalManager.closeModal('modalCadastro');
         }
     }
-    
     
     async handleEditFormSubmit(event) {
         event.preventDefault();
@@ -403,11 +399,14 @@ class PublicAnunciosManager {
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
+            
             publicAnuncios = data || [];
+            console.log('✅ Anúncios carregados:', publicAnuncios.length);
+            console.log('📋 Dados dos anúncios:', publicAnuncios);
             
             this.applyFiltersAndRender(); 
         } catch (error) {
-            console.error('Erro ao carregar anúncios públicos:', error.message);
+            console.error('❌ Erro ao carregar anúncios públicos:', error.message);
             this.setError('Não foi possível carregar os anúncios.');
         } finally {
             this.setLoading(false);
@@ -415,28 +414,40 @@ class PublicAnunciosManager {
     }
 
     applyFiltersAndRender() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+        const searchInput = document.getElementById('searchInput');
+        const searchTerm = searchInput?.value?.toLowerCase()?.trim() || '';
         const activeCategories = Array.from(document.querySelectorAll('input[name="filter"]:checked')).map(cb => cb.value);
 
-        let filteredAnuncios = publicAnuncios;
+        console.log('🔍 Aplicando filtros:', { searchTerm, activeCategories });
+
+        let filteredAnuncios = [...publicAnuncios];
 
         if (activeCategories.length > 0) {
-            filteredAnuncios = filteredAnuncios.filter(anuncio => activeCategories.includes(anuncio.categoria));
+            filteredAnuncios = filteredAnuncios.filter(anuncio => {
+                const match = activeCategories.includes(anuncio.categoria);
+                return match;
+            });
+            console.log('Após filtro de categoria:', filteredAnuncios.length);
         }
 
         if (searchTerm) {
             filteredAnuncios = filteredAnuncios.filter(anuncio => {
                 const profile = anuncio.profiles;
                 const searchString = [
-                    anuncio.titulo,
-                    anuncio.descricao,
-                    anuncio.servicos,
-                    profile?.company_name,
-                    profile?.full_name
-                ].join(' ').toLowerCase();
-                return searchString.includes(searchTerm);
+                    anuncio.titulo || '',
+                    anuncio.descricao || '',
+                    anuncio.servicos || '',
+                    profile?.company_name || '',
+                    profile?.full_name || ''
+                ].filter(Boolean).join(' ').toLowerCase();
+                
+                const match = searchString.includes(searchTerm);
+                return match;
             });
+            console.log('Após filtro de busca:', filteredAnuncios.length);
         }
+        
+        console.log('📊 Total de anúncios filtrados:', filteredAnuncios.length);
         this.render(filteredAnuncios);
     }
 
@@ -446,12 +457,12 @@ class PublicAnunciosManager {
 
         if (anuncios.length === 0) {
             this.setEmpty(true);
-            if (resultsCount) resultsCount.textContent = 'Nenhum resultado';
+            if (resultsCount) resultsCount.textContent = 'Nenhum resultado encontrado';
             return;
         }
         
         this.setEmpty(false);
-        if (resultsCount) resultsCount.textContent = `${anuncios.length} resultado(s)`;
+        if (resultsCount) resultsCount.textContent = `${anuncios.length} resultado${anuncios.length !== 1 ? 's' : ''} encontrado${anuncios.length !== 1 ? 's' : ''}`;
 
         anuncios.forEach(anuncio => {
             const card = this.createAnuncioCard(anuncio);
@@ -542,14 +553,20 @@ class PublicAnunciosManager {
         modalManager.openModal('detailsModal');
     }
 
-    setLoading(isLoading) { if (this.loadingEl) this.loadingEl.style.display = isLoading ? 'block' : 'none'; }
+    setLoading(isLoading) { 
+        if (this.loadingEl) this.loadingEl.style.display = isLoading ? 'block' : 'none'; 
+    }
+    
     setError(message) {
         if (this.emptyEl) {
             this.emptyEl.innerHTML = `<div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h4>Ocorreu um erro</h4><p>${message}</p>`;
             this.setEmpty(true);
         }
     }
-    setEmpty(show) { if (this.emptyEl) this.emptyEl.style.display = show ? 'block' : 'none'; }
+    
+    setEmpty(show) { 
+        if (this.emptyEl) this.emptyEl.style.display = show ? 'block' : 'none'; 
+    }
 }
 
 // ===== GERENCIADOR DE ANÚNCIOS =====
@@ -837,7 +854,6 @@ class AnunciosManager {
         
         try {
             if (this.currentEditId) {
-                // Atualizar anúncio existente
                 const { error } = await supabase
                     .from('anuncios')
                     .update(anuncioData)
@@ -847,7 +863,6 @@ class AnunciosManager {
                 if (error) throw error;
                 toastManager.show('Anúncio atualizado com sucesso!', 'success');
             } else {
-                // Criar novo anúncio
                 const { error } = await supabase
                     .from('anuncios')
                     .insert([anuncioData]);
@@ -867,7 +882,6 @@ class AnunciosManager {
     
     async toggleAnuncioStatus(anuncioId) {
         try {
-            // Buscar o anúncio atual
             const { data: anuncio, error: fetchError } = await supabase
                 .from('anuncios')
                 .select('status')
@@ -940,13 +954,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterCheckboxes = document.querySelectorAll('input[name="filter"]');
     const clearSearchBtn = document.getElementById('clearSearch');
 
-    searchInput.addEventListener('input', () => {
-        clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(() => {
-            publicAnunciosManager.applyFiltersAndRender();
-        }, 300);
-        clearSearchBtn.style.display = searchInput.value ? 'block' : 'none';
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                publicAnunciosManager.applyFiltersAndRender();
+            }, 300);
+            if (clearSearchBtn) {
+                clearSearchBtn.style.display = searchInput.value ? 'block' : 'none';
+            }
+        });
+    }
 
     filterCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => {
@@ -954,22 +972,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    clearSearchBtn.addEventListener('click', () => {
-        searchInput.value = '';
-        clearSearchBtn.style.display = 'none';
-        publicAnunciosManager.applyFiltersAndRender();
-    });
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = '';
+                clearSearchBtn.style.display = 'none';
+                publicAnunciosManager.applyFiltersAndRender();
+            }
+        });
+    }
 
     document.getElementById('excluirContaLink')?.addEventListener('click', async () => {
         if (confirm('ATENÇÃO: Esta ação é irreversível! Deseja realmente excluir sua conta?')) {
             try {
-                // Primeiro deletar anúncios do usuário
                 await supabase.from('anuncios').delete().eq('user_id', currentUser.id);
-                
-                // Depois deletar o perfil (isso também deletará o usuário devido ao CASCADE)
                 await supabase.from('profiles').delete().eq('id', currentUser.id);
-                
-                // Fazer logout
                 await supabase.auth.signOut();
                 
                 toastManager.show('Conta excluída com sucesso.', 'success');
@@ -996,4 +1013,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
