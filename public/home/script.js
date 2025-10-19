@@ -265,15 +265,16 @@ class FormManager {
         const formData = new FormData(form);
         
         const profileData = {
-            id: currentUser.id,  // ✅ ADICIONAR ID
-            email: currentUser.email,  // ✅ ADICIONAR EMAIL
+            id: currentUser.id,
+            email: currentUser.email,
+            full_name: formData.get('nome_completo'),
             phone: formData.get('telefone'),
             cpf_cnpj: formData.get('cpf_cnpj'),
             address: formData.get('endereco'),
             category: formData.get('categoria'),
             company_name: formData.get('is_empresa') === 'sim' ? formData.get('nome_empresa') : null,
             is_partner: true,
-            updated_at: new Date().toISOString()  // ✅ ADICIONAR TIMESTAMP
+            updated_at: new Date().toISOString()
         };
         
         // ✅ USAR UPSERT ao invés de UPDATE
@@ -312,6 +313,7 @@ class FormManager {
         const formData = new FormData(form);
         
         const profileData = {
+            full_name: formData.get('edit_nome_completo'),
             phone: formData.get('telefone'),
             cpf_cnpj: formData.get('cpf_cnpj_editar'),
             address: formData.get('endereco'),
@@ -337,6 +339,7 @@ class FormManager {
     
     loadUserDataForEdit() {
         if (!userProfile) return;
+        document.getElementById('nome_completo_edit').value = userProfile.full_name || '';
         document.getElementById('edit_telefone').value = userProfile.phone || '';
         document.getElementById('cpf_cnpj_editar').value = userProfile.cpf_cnpj || '';
         document.getElementById('edit_endereco').value = userProfile.address || '';
@@ -993,3 +996,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
