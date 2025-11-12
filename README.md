@@ -1,6 +1,7 @@
-# 🏍️ MOTO HELP - Sistema de Ajuda para Motociclistas
+# 🏍️ MOTO HELP - SISTEMA DE GESTÃO WEB PARA O MERCADO DE SERVIÇOS PARA MOTOCICLISTAS EM MANAUS
 
-Este projeto é uma plataforma web interativa desenvolvida para auxiliar motociclistas, com sistema completo de autenticação e gerenciamento de usuários. Utiliza **Supabase** para autenticação e gerenciamento de dados em tempo real.
+
+Este projeto é uma plataforma web interativa desenvolvida para auxiliar motociclistas, com sistema completo de autenticação e gerenciamento de Anúncios . Utiliza **Supabase** para autenticação e gerenciamento de dados em tempo real.
 
 ## 📸 Capturas de Tela
 
@@ -66,19 +67,7 @@ Antes de começar, você precisará ter:
 - Editor de código (recomendado: VS Code)
 - Node.js instalado (opcional, para servidor local)
 
-## 🔧 Configuração do Supabase
 
-1. Crie uma conta em [supabase.com](https://supabase.com)
-2. Crie um novo projeto
-3. Acesse as configurações do projeto e copie:
-   - `Project URL`
-   - `anon/public key`
-4. Crie um arquivo `.env` na raiz do projeto:
-
-```env
-SUPABASE_URL=sua_url_aqui
-SUPABASE_ANON_KEY=sua_chave_aqui
-```
 
 5. Configure as tabelas necessárias no Supabase Dashboard
 
@@ -95,7 +84,7 @@ cd moto-help
 # Abra o arquivo index.html no navegador
 ```
 
-### Opção 2: Com Servidor Local
+### Opção 1: Com Servidor Local
 ```bash
 # Clone o repositório
 git clone https://github.com/seu-usuario/moto-help.git
