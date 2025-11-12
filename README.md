@@ -8,6 +8,8 @@ Este projeto é uma plataforma web interativa desenvolvida para auxiliar motocic
 *(Adicione suas capturas de tela aqui)*
 
 - Tela Inicial
+<img width="1874" height="921" alt="image" src="https://github.com/user-attachments/assets/986687bc-2484-4d22-8343-4692f0e72f47" />
+
 - Tela de Login
 - Tela de Cadastro
 - Portal Principal
