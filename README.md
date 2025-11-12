@@ -91,7 +91,7 @@ cd moto-help
 
 ```bash
 # Clone o repositório
-git clone https://github.com/seu-usuario/moto-help.git
+git clone https://github.com/GeorgeLucas1/MOTO-HELP
 
 # Navegue até a pasta
 cd moto-help
@@ -142,6 +142,8 @@ Contribuições são bem-vindas! Para contribuir:
 - **GEORGE LUCAS SILVA LEITÃO**
   - GitHub: [@georgelucas](https://github.com/georgelucas)
 - **Rafhael Ellinkel Lopes Dias**
+-   - GitHub: [@rafhaeldias13-gif](https://github.com/rafhaeldias13-gif)
+
 - **João Viktor Mota da Silva Pierre**
 
 ## 👩‍🏫 Orientadora
