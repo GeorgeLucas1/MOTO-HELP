@@ -150,13 +150,12 @@ Contribuições são bem-vindas! Para contribuir:
 
 - **Luana Leal**
 
-## 📝 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ## 📞 Contato
 
-Para dúvidas ou sugestões, entre em contato através do email: contato@motohelp.com
+Para dúvidas ou sugestões, entre em contato através do email: georgelucas.leitao20004@gmail.com
+
 
 ---
 
