@@ -160,6 +160,6 @@ Para dúvidas ou sugestões, entre em contato através do email: contato@motohel
 
 ---
 
-💼 Projeto desenvolvido para estudos e prática em desenvolvimento web com foco em autenticação e gerenciamento de usuários.
+💼 Projeto desenvolvido para estudos e prática em desenvolvimento web com foco em autenticação e gerenciamento de Anúncios.
 
 ⭐ Se este projeto foi útil para você, considere dar uma estrela no repositório!
