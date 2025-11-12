@@ -110,13 +110,11 @@ Acesse `http://localhost:8000` no navegador.
 ### Autenticação
 - Cadastro de novos usuários com validação de e-mail
 - Login seguro com Supabase Auth
-- Recuperação de senha
 - Logout e gerenciamento de sessão
 
 ### Portal do Usuário
 - Dashboard personalizado
-- Acesso a serviços de auxílio
-- Sistema de favoritos
+- Acesso a serviços dos equipamentos vendidos
 - Perfil editável
 
 ## 🔒 Segurança
