@@ -5,17 +5,23 @@ Este projeto é uma plataforma web interativa desenvolvida para auxiliar motocic
 
 ## 📸 Capturas de Tela
 
-*(Adicione suas capturas de tela aqui)*
 
 - Tela Inicial
 <img width="1874" height="921" alt="image" src="https://github.com/user-attachments/assets/986687bc-2484-4d22-8343-4692f0e72f47" />
 
-- Tela de Login
-- Tela de Cadastro
-- Portal Principal
-- Menu de Navegação
-- Área de Serviços
-- Favoritos
+- Tela de Login e  Tela de Cadastro
+  <img width="633" height="558" alt="image" src="https://github.com/user-attachments/assets/bd550f12-0db9-4893-9518-b5378a88085c" />
+
+- Portal Principal e Menu de Navegação
+  <img width="985" height="826" alt="image" src="https://github.com/user-attachments/assets/7849908c-1f91-4ab7-9176-8b79fa053f54" />
+
+- Chat-bot
+  <img width="709" height="845" alt="image" src="https://github.com/user-attachments/assets/742b8613-050c-43c3-aca8-06a09c835bf2" />
+
+- Gerenciar Anúncios
+  <img width="1050" height="587" alt="image" src="https://github.com/user-attachments/assets/22695212-87b3-41fe-b638-318cf100f38d" />
+
+
 
 ## 🚀 Funcionalidades
 
