@@ -58,7 +58,7 @@ Características da sua personalidade:
             <div class="message bot-message">
                 <div class="message-avatar"><i class="fas fa-robot"></i></div>
                 <div class="message-content">
-                    <p>Olá! 🏍️ Eu sou o MOTO AI, seu assistente virtual do Moto Help! Como posso te ajudar hoje?</p>
+                    <p>Olá! 🏍️ Eu sou o MOTO AI-Chat-bot, seu assistente virtual do Moto Help! Como posso te ajudar hoje?</p>
                 </div>
             </div>
         </div>
