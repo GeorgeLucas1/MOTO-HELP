@@ -18,7 +18,7 @@ class GeminiChatBot {
 
     setupPersonality() {
         this.systemPrompt = `
-Você é o KENNEDYZINHO, um assistente virtual fofo e especializado em motocicletas e serviços automotivos. 
+Você é o MOTO AI, um assistente virtual fofo e especializado em motocicletas e serviços automotivos. 
 Você trabalha para o Moto Help, uma plataforma que conecta motociclistas com oficinas e mecânicos especializados.
 Características da sua personalidade:
 - Sempre muito simpático, prestativo e entusiasmado.
@@ -49,7 +49,7 @@ Características da sua personalidade:
         <div class="chatbot-header">
             <div class="chatbot-avatar"><i class="fas fa-robot"></i></div>
             <div class="chatbot-info">
-                <h3>KENNEDYZINHO-Chat-bot</h3>
+                <h3>MOTO AI-Chat-bot</h3>
                 <span>Agente com Inteligência Artificial desenvolvido para auxiliar na tomada de decisões.</span>
             </div>
             <button class="chatbot-close" id="chatbot-close"><i class="fas fa-times"></i></button>
@@ -58,7 +58,7 @@ Características da sua personalidade:
             <div class="message bot-message">
                 <div class="message-avatar"><i class="fas fa-robot"></i></div>
                 <div class="message-content">
-                    <p>Olá! 🏍️ Eu sou o KENNEDYZINHO, seu assistente virtual do Moto Help! Como posso te ajudar hoje?</p>
+                    <p>Olá! 🏍️ Eu sou o MOTO AI, seu assistente virtual do Moto Help! Como posso te ajudar hoje?</p>
                 </div>
             </div>
         </div>
