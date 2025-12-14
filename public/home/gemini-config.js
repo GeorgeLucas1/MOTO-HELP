@@ -1,11 +1,12 @@
 class GeminiChatBot {
     constructor() {
         // ==================================================================
-        // IMPORTANTE: Substitua pela sua chave de API real
+        // IMPORTANTE: Substitua pela sua chave de API real válida
+        // Obtenha uma em: https://makersuite.google.com/app/apikey
         // ==================================================================
         this.apiKey = 'AIzaSyD0Og-bijNNR_Ko0JmUr6Q440vfYskMqb8'; 
-        this.apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-        this.conversationHistory = []; // Armazena pares de {role: 'user'/'model', content: 'mensagem'}
+        this.apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+        this.conversationHistory = [];
         this.isTyping = false;
         this.init();
     }
@@ -20,18 +21,19 @@ class GeminiChatBot {
         this.systemPrompt = `
 Você é o MOTO AI, um assistente virtual fofo e especializado em motocicletas e serviços automotivos. 
 Você trabalha para o Moto Help, uma plataforma que conecta motociclistas com oficinas e mecânicos especializados.
+
 Características da sua personalidade:
 - Sempre muito simpático, prestativo e entusiasmado.
 - Usa emojis relacionados a motos (🏍️, 🔧, ⚙️, 🛠️) com frequência.
 - Ajuda em planejar troca de peças de motos.
--  voce é capaz de criar descriçoes dos anuncios dos anunciantes
--  ajudar com os problema de motos e de carros
--quando perguntarem de precos. fale que moto helpe uma plataforma que oferece oficinas e empresas confiaveis
--as resposta tem quer direta evite dá respostas curtas 
-- se pergunta for dificil e nao souber responder. fale que moto help é uma plataforma que oferece serviços de divulgaçoes de empresas ,oficina e mão de obra qualificada
-- entender as causa dos problema e dá uma dica no que fazer relacionado ao problema do carro ou moto
-- ultilizar termos técnicos quando um usuario enviar causa dos problema do carro e indicar a possivel causa
-- consultar estimativa do preços de peças de motos como capacete,oleo e etc
+- Você é capaz de criar descrições dos anúncios dos anunciantes.
+- Ajudar com os problemas de motos e de carros.
+- Quando perguntarem de preços, fale que Moto Help é uma plataforma que oferece oficinas e empresas confiáveis.
+- As respostas têm que ser diretas, evite dar respostas curtas.
+- Se a pergunta for difícil e não souber responder, fale que Moto Help é uma plataforma que oferece serviços de divulgações de empresas, oficina e mão de obra qualificada.
+- Entender as causas dos problemas e dar uma dica no que fazer relacionado ao problema do carro ou moto.
+- Utilizar termos técnicos quando um usuário enviar causas dos problemas do carro e indicar a possível causa.
+- Consultar estimativa dos preços de peças de motos como capacete, óleo e etc.
 - Se perguntarem quem desenvolveu o Moto Help, diga que foi trabalho de conclusão da Fametro.
 - Conhece muito sobre motocicletas, manutenção, peças e serviços.
 - Sempre tenta ajudar o usuário a encontrar soluções para problemas com motos.
@@ -82,14 +84,34 @@ Características da sua personalidade:
         const input = document.getElementById("chatbot-input");
         const sendButton = document.getElementById("chatbot-send");
 
-        if (!chatBotButton) { console.error("Botão do Chatbot não encontrado!"); return; }
+        if (!chatBotButton) { 
+            console.error("Botão do Chatbot não encontrado!"); 
+            return; 
+        }
 
-        chatBotButton.addEventListener("click", () => { chatBotOverlay.classList.add("active"); input.focus(); });
+        chatBotButton.addEventListener("click", () => { 
+            chatBotOverlay.classList.add("active"); 
+            input.focus(); 
+        });
+        
         closeButton.addEventListener("click", () => chatBotOverlay.classList.remove("active"));
-        chatBotOverlay.addEventListener("click", (e) => { if (e.target === chatBotOverlay) chatBotOverlay.classList.remove("active"); });
+        
+        chatBotOverlay.addEventListener("click", (e) => { 
+            if (e.target === chatBotOverlay) chatBotOverlay.classList.remove("active"); 
+        });
+        
         sendButton.addEventListener("click", () => this.sendMessage());
-        input.addEventListener("keypress", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); this.sendMessage(); } });
-        input.addEventListener("input", () => { sendButton.disabled = input.value.trim() === ""; });
+        
+        input.addEventListener("keypress", (e) => { 
+            if (e.key === "Enter" && !e.shiftKey) { 
+                e.preventDefault(); 
+                this.sendMessage(); 
+            } 
+        });
+        
+        input.addEventListener("input", () => { 
+            sendButton.disabled = input.value.trim() === ""; 
+        });
     }
 
     async sendMessage() {
@@ -98,84 +120,115 @@ Características da sua personalidade:
         if (!message || this.isTyping) return;
 
         this.addMessage(message, "user");
-        this.conversationHistory.push({ role: "user", content: message }); // Adiciona a mensagem do usuário ao histórico
-
         input.value = "";
         document.getElementById("chatbot-send").disabled = true;
         this.showTypingIndicator();
 
         try {
-            const response = await this.callGeminiAPI(); // Não passa a mensagem aqui, pois já está no histórico
+            const response = await this.callGeminiAPI(message);
             this.hideTypingIndicator();
-            const formattedResponse = response.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+            const formattedResponse = response
+                .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                .replace(/\n/g, "<br>");
             this.addMessage(formattedResponse, "bot");
         } catch (error) {
             this.hideTypingIndicator();
             console.error("Erro ao comunicar com Gemini:", error);
-            this.addMessage("Desculpe, estou com problemas técnicos no momento. 🔧 Tente novamente em alguns instantes!", "bot");
+            
+            let errorMessage = "Desculpe, estou com problemas técnicos no momento. 🔧";
+            
+            if (error.message.includes('403')) {
+                errorMessage = "⚠️ Erro de autenticação! Verifique se a chave de API está correta e ativa. Configure uma chave válida em: https://makersuite.google.com/app/apikey";
+            } else if (error.message.includes('404')) {
+                errorMessage = "⚠️ Modelo não encontrado. Verifique o nome do modelo na API.";
+            } else if (error.message.includes('429')) {
+                errorMessage = "⚠️ Limite de requisições atingido. Aguarde alguns momentos e tente novamente.";
+            }
+            
+            this.addMessage(errorMessage, "bot");
         }
     }
 
-    async callGeminiAPI() {
+    async callGeminiAPI(userMessage) {
+        // Validar chave de API
+        if (!this.apiKey || this.apiKey === 'SUA_CHAVE_API_AQUI') {
+            throw new Error('403 - Chave de API não configurada');
+        }
+
+        // Construir histórico formatado
         const contents = [];
         
-        // Adicionar o histórico de conversação existente
-        // A API Gemini exige uma alternância estrita de 'user' e 'model' no histórico.
-        // O `conversationHistory` deve ser uma sequência de {role: 'user', content: '...'}, {role: 'model', content: '...'}, etc.
-        for (const msg of this.conversationHistory) {
-            contents.push({
-                role: msg.role,
-                parts: [{ text: msg.content }]
-            });
-        }
+        // Adicionar o prompt do sistema como primeira mensagem do usuário
+        contents.push({
+            role: "user",
+            parts: [{ text: this.systemPrompt + "\n\nUsuário: " + userMessage }]
+        });
 
         const requestBody = {
             contents: contents,
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 512
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 1024,
             },
-            // system_instruction é o campo correto para o prompt do sistema
-            system_instruction: { parts: [{ text: this.systemPrompt }] }
+            safetySettings: [
+                {
+                    category: "HARM_CATEGORY_HARASSMENT",
+                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    category: "HARM_CATEGORY_HATE_SPEECH",
+                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                }
+            ]
         };
 
         const response = await fetch(`${this.apiUrl}?key=${this.apiKey}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
             const errorBody = await response.json().catch(() => ({}));
-            console.error("API Error:", errorBody);
-            throw new Error(`HTTP error! status: ${response.status}`);
+            console.error("API Error Details:", errorBody);
+            throw new Error(`HTTP error! status: ${response.status} - ${JSON.stringify(errorBody)}`);
         }
 
         const data = await response.json();
 
         if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
             console.error("Resposta inesperada da API:", data);
-            return 'Desculpe, não consegui processar sua mensagem desta vez.';
+            
+            // Verificar se foi bloqueado por segurança
+            if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+                return 'Desculpe, não posso responder a essa pergunta por questões de segurança. Posso ajudar com outra coisa? 🏍️';
+            }
+            
+            return 'Desculpe, não consegui processar sua mensagem desta vez. Tente reformular sua pergunta! 😊';
         }
 
-        const botResponse = data.candidates[0].content.parts[0].text;
-
-        // Adicionar a resposta do bot ao histórico
-        this.conversationHistory.push({ role: 'model', content: botResponse });
-
-        // Limitar o histórico para evitar que fique muito longo
-        if (this.conversationHistory.length > 10) {
-            this.conversationHistory = this.conversationHistory.slice(-10);
-        }
-
-        return botResponse;
+        return data.candidates[0].content.parts[0].text;
     }
 
     addMessage(content, sender) {
         const messagesContainer = document.getElementById("chatbot-messages");
         const messageDiv = document.createElement("div");
         messageDiv.className = `message ${sender}-message`;
-        const avatarHTML = sender === "bot" ? `<div class="message-avatar"><i class="fas fa-robot"></i></div>` : "";
+        const avatarHTML = sender === "bot" 
+            ? `<div class="message-avatar"><i class="fas fa-robot"></i></div>` 
+            : "";
         messageDiv.innerHTML = `${avatarHTML}<div class="message-content"><p>${content}</p></div>`;
         messagesContainer.appendChild(messageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -211,4 +264,3 @@ Características da sua personalidade:
 document.addEventListener("DOMContentLoaded", () => {
     new GeminiChatBot();
 });
-
