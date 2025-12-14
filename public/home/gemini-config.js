@@ -4,7 +4,7 @@ class GeminiChatBot {
         // IMPORTANTE: Substitua pela sua chave de API real válida
         // Obtenha uma em: https://ai.google.dev/gemini-api/docs/api-key
         // ==================================================================
-        this.apiKey = 'AIzaSyD0Og-bijNNR_Ko0JmUr6Q440vfYskMqb8'; 
+        this.apiKey = 'AIzaSyA3o21GKXs8nRG5j4_G5TBLp1ZcXvRUmus'; 
         this.apiUrl = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent';
         this.conversationHistory = [];
         this.isTyping = false;
