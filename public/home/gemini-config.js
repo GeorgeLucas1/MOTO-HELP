@@ -2,10 +2,10 @@ class GeminiChatBot {
     constructor() {
         // ==================================================================
         // IMPORTANTE: Substitua pela sua chave de API real válida
-        // Obtenha uma em: https://makersuite.google.com/app/apikey
+        // Obtenha uma em: https://ai.google.dev/gemini-api/docs/api-key
         // ==================================================================
         this.apiKey = 'AIzaSyD0Og-bijNNR_Ko0JmUr6Q440vfYskMqb8'; 
-        this.apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+        this.apiUrl = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent';
         this.conversationHistory = [];
         this.isTyping = false;
         this.init();
@@ -131,6 +131,11 @@ Características da sua personalidade:
                 .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
                 .replace(/\n/g, "<br>");
             this.addMessage(formattedResponse, "bot");
+            
+            // Adicionar a mensagem do usuário e a resposta do bot ao histórico
+            this.conversationHistory.push({ role: "user", parts: [{ text: message }] });
+            this.conversationHistory.push({ role: "model", parts: [{ text: response }] });
+
         } catch (error) {
             this.hideTypingIndicator();
             console.error("Erro ao comunicar com Gemini:", error);
@@ -138,7 +143,7 @@ Características da sua personalidade:
             let errorMessage = "Desculpe, estou com problemas técnicos no momento. 🔧";
             
             if (error.message.includes('403')) {
-                errorMessage = "⚠️ Erro de autenticação! Verifique se a chave de API está correta e ativa. Configure uma chave válida em: https://makersuite.google.com/app/apikey";
+                errorMessage = "⚠️ Erro de autenticação! Verifique se a chave de API está correta e ativa. Configure uma chave válida em: https://ai.google.dev/gemini-api/docs/api-key";
             } else if (error.message.includes('404')) {
                 errorMessage = "⚠️ Modelo não encontrado. Verifique o nome do modelo na API.";
             } else if (error.message.includes('429')) {
@@ -158,10 +163,24 @@ Características da sua personalidade:
         // Construir histórico formatado
         const contents = [];
         
-        // Adicionar o prompt do sistema como primeira mensagem do usuário
+        // 1. Adicionar o prompt do sistema como primeira mensagem do usuário
+        // O Gemini API usa o primeiro 'user' content para o system instruction
         contents.push({
             role: "user",
-            parts: [{ text: this.systemPrompt + "\n\nUsuário: " + userMessage }]
+            parts: [{ text: this.systemPrompt }]
+        });
+
+        // 2. Adicionar o histórico da conversa (alternando user/model)
+        // O histórico deve ser adicionado *antes* da mensagem atual do usuário
+        // O histórico atual está vazio, mas a estrutura está pronta para uso futuro
+        // for (const message of this.conversationHistory) {
+        //     contents.push(message);
+        // }
+
+        // 3. Adicionar a mensagem atual do usuário
+        contents.push({
+            role: "user",
+            parts: [{ text: userMessage }]
         });
 
         const requestBody = {
